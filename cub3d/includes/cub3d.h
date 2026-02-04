@@ -15,6 +15,7 @@
 
 # include <fcntl.h>
 # include <unistd.h>
+# include <../get_next_line/get_next_line.h>
 
 //PARSING
 int parsing(int ac, char **av);
