@@ -12,7 +12,10 @@
 
 #include <cub3d.h>
 
-int good_map()
+int good_map(void)
+{
+    return (1);
+}
 
 int not_directory(char *str)
 {
