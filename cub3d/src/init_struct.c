@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include <cub3d.h>
+#include <stdlib.h>
 
 static int	is_map_char(char c)
 {
@@ -34,6 +35,55 @@ int	is_map_line(char *line)
 		i++;
 	}
 	return (0);
+}
+
+static size_t	str_len(const char *s)
+{
+	size_t	i;
+
+	if (!s)
+		return (0);
+	i = 0;
+	while (s[i])
+		i++;
+	return (i);
+}
+
+static char	*str_dup(const char *s)
+{
+	char	*dup;
+	size_t	i;
+	size_t	len;
+
+	if (!s)
+		return (NULL);
+	len = str_len(s);
+	dup = (char *)malloc(len + 1);
+	if (!dup)
+		return (NULL);
+	i = 0;
+	while (i < len)
+	{
+		dup[i] = s[i];
+		i++;
+	}
+	dup[i] = '\0';
+	return (dup);
+}
+
+static char	*str_chr(const char *s, int c)
+{
+	if (!s)
+		return (NULL);
+	while (*s)
+	{
+		if (*s == (char)c)
+			return ((char *)s);
+		s++;
+	}
+	if (c == '\0')
+		return ((char *)s);
+	return (NULL);
 }
 
 int	count_map_height(int fd)
@@ -75,7 +125,7 @@ static char	*trim_eol(char *line)
 
 	if (!line)
 		return (NULL);
-	len = ft_strlen(line);
+	len = str_len(line);
 	while (len > 0 && (line[len - 1] == '\n' || line[len - 1] == '\r'))
 		len--;
 	line[len] = '\0';
@@ -102,9 +152,9 @@ void	fill_map(t_map *map, int fd)
 				break ;
 			}
 			line = trim_eol(line);
-			map->grid[i] = ft_strdup(line);
-			if ((int)ft_strlen(map->grid[i]) > map->width)
-				map->width = ft_strlen(map->grid[i]);
+			map->grid[i] = str_dup(line);
+			if ((int)str_len(map->grid[i]) > map->width)
+				map->width = str_len(map->grid[i]);
 			i++;
 		}
 		free(line);
@@ -123,7 +173,7 @@ void	find_player(t_map *map)
 		x = 0;
 		while (map->grid[y][x])
 		{
-			if (ft_strchr("NSEW", map->grid[y][x]))
+			if (str_chr("NSEW", map->grid[y][x]))
 			{
 				map->player_dir = map->grid[y][x];
 				map->player_x = x;
