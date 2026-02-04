@@ -37,6 +37,14 @@ typedef struct s_map
     int height;
 }  t_map;
 
+typedef struct s_texture
+{
+    char *north;
+    char *south;
+    char *west;
+    char *east;
+}   t_texture;
+
 //Stucture CUB3D
 typedef struct s_cub
 {
@@ -45,13 +53,5 @@ typedef struct s_cub
     t_color ceiling;
     t_map map;
 }   t_cub;
-
-typedef struct s_texture
-{
-    char *north;
-    char *south;
-    char *west;
-    char *east;
-}   t_texture;
 
 #endif
