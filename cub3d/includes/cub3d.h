@@ -17,10 +17,6 @@
 # include <unistd.h>
 # include <../get_next_line/get_next_line.h>
 
-//PARSING
-int parsing(int ac, char **av);
-int not_directory(char *str);
-
 //Structure couleur RGB
 typedef struct s_color
 {
@@ -56,5 +52,11 @@ typedef struct s_cub
     t_color ceiling;
     t_map map;
 }   t_cub;
+
+//PARSING
+int		parsing(int ac, char **av);
+int		not_directory(char *str);
+void	init_map(t_map *map, char *path_map);
+int		good_map(char *path_map);
 
 #endif
