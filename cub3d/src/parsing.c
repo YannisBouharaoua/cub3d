@@ -12,15 +12,13 @@
 
 #include <cub3d.h>
 
-int map_good();
-
 int good_map();
 
 int not_directory(char *str)
 {
     int fd;
 
-    fd = open(av[1], O_RDONLY | O_DIRECTORY);
+    fd = open(str, O_RDONLY | O_DIRECTORY);
     if(fd = -1)
     {
         close(fd);
