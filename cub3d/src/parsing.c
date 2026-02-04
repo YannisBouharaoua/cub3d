@@ -1,4 +1,11 @@
 
+int good_map()
+
+int not_directory(char **av)
+{
+    
+}
+
 int parsing(int ac, char **av)
 {
     if(not_directory(av))
