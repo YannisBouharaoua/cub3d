@@ -192,12 +192,43 @@ static int	push_line(char ***lines, int *count, int *cap, char *line)
 	return (1);
 }
 
+static void	flood_spaces(char **g, int h, int w, int y, int x)
+{
+	if (y < 0 || x < 0 || y >= h || x >= w)
+		return ;
+	if (g[y][x] != ' ')
+		return ;
+	g[y][x] = 'X';
+	flood_spaces(g, h, w, y - 1, x);
+	flood_spaces(g, h, w, y + 1, x);
+	flood_spaces(g, h, w, y, x - 1);
+	flood_spaces(g, h, w, y, x + 1);
+}
+
 static int	is_closed(char **lines, int height, int width)
 {
 	int		y;
 	int		x;
 	char	c;
 
+	y = 0;
+	while (y < height)
+	{
+		if (lines[y][0] == ' ')
+			flood_spaces(lines, height, width, y, 0);
+		if (lines[y][width - 1] == ' ')
+			flood_spaces(lines, height, width, y, width - 1);
+		y++;
+	}
+	x = 0;
+	while (x < width)
+	{
+		if (lines[0][x] == ' ')
+			flood_spaces(lines, height, width, 0, x);
+		if (lines[height - 1][x] == ' ')
+			flood_spaces(lines, height, width, height - 1, x);
+		x++;
+	}
 	y = 0;
 	while (y < height)
 	{
@@ -209,8 +240,8 @@ static int	is_closed(char **lines, int height, int width)
 			{
 				if (y == 0 || x == 0 || y == height - 1 || x == width - 1)
 					return (0);
-				if (lines[y - 1][x] == ' ' || lines[y + 1][x] == ' '
-					|| lines[y][x - 1] == ' ' || lines[y][x + 1] == ' ')
+				if (lines[y - 1][x] == 'X' || lines[y + 1][x] == 'X'
+					|| lines[y][x - 1] == 'X' || lines[y][x + 1] == 'X')
 					return (0);
 			}
 			x++;

@@ -6,14 +6,12 @@
 /*   By: yabouhar <yabouhar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/04 14:28:19 by yabouhar          #+#    #+#             */
-/*   Updated: 2026/02/04 14:28:19 by yabouhar         ###   ########.fr       */
+/*   Updated: 2026/02/04 16:17:08 by yabouhar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <cub3d.h>
 #include <stdio.h>
-
-int	good_map(char *path_map);
 
 int not_directory(char *str)
 {
