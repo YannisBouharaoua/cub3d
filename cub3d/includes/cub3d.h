@@ -13,4 +13,12 @@
 #ifndef CUB3D_H
 # define CUB3D_H
 
+# include <fcntl.h>
+# include <unistd.h>
+
+//PARSING
+int parsing(int ac, char **av);
+int not_directory(char *str);
+
+
 #endif
