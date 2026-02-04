@@ -32,9 +32,12 @@ typedef struct s_color
 //Structure map
 typedef struct s_map
 {
-    char **grid;
-    int width;
-    int height;
+    char    **grid;
+    int     width;
+    int     height;
+    char    player_dir;
+    int     player_x;
+    int     player_y;
 }  t_map;
 
 //Stucture CUB3D

@@ -29,12 +29,14 @@ int not_directory(char *str)
 int parsing(int ac, char **av)
 {
     char *path_map = av[1];
+    t_cub cub;
 
     if(not_directory(path_map))
     {
-        if(good_map())
+        if(good_map(path_map))
         {
             printf("GoodMap\n");
+            init_map(&cub.map, path_map);
             return(0);
         }
         printf("BadMap Format\n");
