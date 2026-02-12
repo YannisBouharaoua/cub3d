@@ -22,19 +22,23 @@ static int	is_map_char(char c)
 int	is_map_line(char *line)
 {
 	int	i;
+	int	has_map_token;
 
 	if (!line)
 		return (0);
 	i = 0;
+	has_map_token = 0;
 	while (line[i])
 	{
 		if (line[i] == '\n' || line[i] == '\r')
 			break ;
-		if (is_map_char(line[i]) && line[i] != ' ')
-			return (1);
+		if (!is_map_char(line[i]))
+			return (0);
+		if (line[i] != ' ')
+			has_map_token = 1;
 		i++;
 	}
-	return (0);
+	return (has_map_token);
 }
 
 static size_t	str_len(const char *s)
