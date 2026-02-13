@@ -50,9 +50,12 @@ void	cast_rays(t_game *g)
 		int		line_h;
 		int		draw_start;
 		int		draw_end;
+		int		draw_start_raw;
 		double	wall_x;
 		int		tex_x;
 		int		tex_y;
+		double	tex_pos;
+		double	tex_step;
 		int		y;
 
 		camera_x = (2.0 * x / (double)w) - 1.0;
@@ -112,7 +115,10 @@ void	cast_rays(t_game *g)
 		if (perp < 0.0001)
 			perp = 0.0001;
 		line_h = (int)(h / perp);
-		draw_start = -line_h / 2 + h / 2;
+		if (line_h < 1)
+			line_h = 1;
+		draw_start_raw = -line_h / 2 + h / 2;
+		draw_start = draw_start_raw;
 		draw_end = line_h / 2 + h / 2;
 		if (draw_start < 0)
 			draw_start = 0;
@@ -130,18 +136,21 @@ void	cast_rays(t_game *g)
 			tex_x = 0;
 		if (tex_x >= g->wall_tex.w)
 			tex_x = g->wall_tex.w - 1;
+		tex_step = (double)g->wall_tex.h / (double)line_h;
+		tex_pos = (draw_start - draw_start_raw) * tex_step;
 		y = draw_start;
 		while (y <= draw_end)
 		{
 			if (g->wall_tex.addr && line_h > 0)
 			{
-				tex_y = (int)(((y - draw_start) * (double)g->wall_tex.h) / line_h);
+				tex_y = (int)tex_pos;
 				if (tex_y < 0)
 					tex_y = 0;
 				if (tex_y >= g->wall_tex.h)
 					tex_y = g->wall_tex.h - 1;
 				put_pixel(g, x, y, *(int *)(g->wall_tex.addr + tex_y
 						* g->wall_tex.line_len + tex_x * (g->wall_tex.bpp / 8)));
+				tex_pos += tex_step;
 			}
 			else
 				put_pixel(g, x, y, 0x00AA00);
