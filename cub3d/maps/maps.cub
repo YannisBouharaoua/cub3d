@@ -1,7 +1,7 @@
-NO textures/test_wall.xpm
-SO textures/test_wall.xpm
-WE textures/test_wall.xpm
-EA textures/test_wall.xpm
+NO textures/01bricks1.xpm
+SO textures/01bricks1.xpm
+WE textures/01bricks1.xpm
+EA textures/01bricks1.xpm
 
 F 220,100,0
 C 225,30,0

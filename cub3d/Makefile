@@ -1,4 +1,4 @@
-NAME        := cub3d
+NAME        := cub3D
 
 CC          := cc
 CFLAGS      := -Wall -Wextra -Werror
@@ -10,6 +10,12 @@ SRCS        := \
 	src/parsing.c \
 	src/init_struct.c \
 	src/good_map.c \
+	src/map_get.c \
+	src/mlx_init.c \
+	src/pixel.c \
+	src/render.c \
+	src/raycast.c \
+	src/input.c \
 	get_next_line/get_next_line.c \
 	get_next_line/get_next_line_utils.c
 
