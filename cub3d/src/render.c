@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   render.c                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: coder <coder@student.42.fr>                +#+  +:+       +#+        */
+/*   By: mmestron <mmestron@student.fr>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/04 17:10:00 by coder             #+#    #+#             */
-/*   Updated: 2026/02/04 17:10:00 by coder            ###   ########.fr       */
+/*   Updated: 2026/02/13 14:42:48 by mmestron         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@
 #define KEY_S 115
 #define KEY_D 100
 
-#define MOVE_SPEED 0.06
+#define MOVE_SPEED 0.03
 #define ROT_SPEED 0.04
 #define COLLIDER_R 0.20
 
@@ -66,31 +66,68 @@ static int	img_get_pixel(t_img *img, int x, int y)
 
 void	draw_floor_ceiling(t_game *g)
 {
-	int	x;
-	int	y;
-	int	half;
-	int	fx;
-	int	fy;
+	int		x;
+	int		y;
+	int		half;
+	double	dir_x;
+	double	dir_y;
+	double	plane_x;
+	double	plane_y;
+	double	ray0_x;
+	double	ray0_y;
+	double	ray1_x;
+	double	ray1_y;
+	double	row_dist;
+	double	step_x;
+	double	step_y;
+	double	floor_x;
+	double	floor_y;
 
 	if (!g)
 		return ;
 	half = g->mlx.h / 2;
 	y = 0;
-	while (y < g->mlx.h)
+	while (y < half)
 	{
 		x = 0;
 		while (x < g->mlx.w)
+			put_pixel(g, x++, y, g->ceil_color);
+		y++;
+	}
+	if (!g->floor_tex.addr)
+	{
+		while (y < g->mlx.h)
 		{
-			if (y < half)
-				put_pixel(g, x, y, g->ceil_color);
-			else if (g->floor_tex.addr)
-			{
-				fx = x / 2;
-				fy = (y - half) / 2;
-				put_pixel(g, x, y, img_get_pixel(&g->floor_tex, fx, fy));
-			}
-			else
-				put_pixel(g, x, y, g->floor_color);
+			x = 0;
+			while (x < g->mlx.w)
+				put_pixel(g, x++, y, g->floor_color);
+			y++;
+		}
+		return ;
+	}
+	dir_x = cos(g->player.angle);
+	dir_y = sin(g->player.angle);
+	plane_x = -dir_y * tan(0.5235987755982988);
+	plane_y = dir_x * tan(0.5235987755982988);
+	ray0_x = dir_x - plane_x;
+	ray0_y = dir_y - plane_y;
+	ray1_x = dir_x + plane_x;
+	ray1_y = dir_y + plane_y;
+	while (y < g->mlx.h)
+	{
+		row_dist = (0.5 * g->mlx.h) / (y - half + 0.0001);
+		step_x = row_dist * (ray1_x - ray0_x) / g->mlx.w;
+		step_y = row_dist * (ray1_y - ray0_y) / g->mlx.w;
+		floor_x = g->player.x + row_dist * ray0_x;
+		floor_y = g->player.y + row_dist * ray0_y;
+		x = 0;
+		while (x < g->mlx.w)
+		{
+			put_pixel(g, x, y, img_get_pixel(&g->floor_tex,
+					(int)((floor_x - floor(floor_x)) * g->floor_tex.w),
+					(int)((floor_y - floor(floor_y)) * g->floor_tex.h)));
+			floor_x += step_x;
+			floor_y += step_y;
 			x++;
 		}
 		y++;
