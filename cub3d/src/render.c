@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include <cub3d.h>
+#include <sys/time.h>
 
 #define KEY_W 119
 #define KEY_A 97
@@ -99,8 +100,17 @@ void	draw_floor_ceiling(t_game *g)
 
 int	render_frame(t_game *g)
 {
+	static long	last_ms;
+	struct timeval	tv;
+	long		now_ms;
+
 	if (!g)
 		return (0);
+	gettimeofday(&tv, NULL);
+	now_ms = (tv.tv_sec * 1000L) + (tv.tv_usec / 1000L);
+	if (now_ms - last_ms < 16)
+		return (0);
+	last_ms = now_ms;
 	update_player(g);
 	draw_floor_ceiling(g);
 	cast_rays(g);

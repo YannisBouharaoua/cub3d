@@ -195,11 +195,34 @@ void	init_map(t_map *map, char *path_map)
 	int	fd;
 	int	height;
 
+	if (!map || !path_map)
+		return ;
 	fd = open(path_map, O_RDONLY);
+	if (fd < 0)
+	{
+		map->grid = NULL;
+		map->height = 0;
+		map->width = 0;
+		map->player_dir = 0;
+		map->player_x = 0;
+		map->player_y = 0;
+		return ;
+	}
 	height = count_map_height(fd);
 	close(fd);
 	alloc_map(map, height);
 	fd = open(path_map, O_RDONLY);
+	if (fd < 0)
+	{
+		free(map->grid);
+		map->grid = NULL;
+		map->height = 0;
+		map->width = 0;
+		map->player_dir = 0;
+		map->player_x = 0;
+		map->player_y = 0;
+		return ;
+	}
 	fill_map(map, fd);
 	close(fd);
 	find_player(map);

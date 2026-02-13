@@ -41,11 +41,11 @@ int	main(int ac, char **av)
 		fprintf(stderr, "Is a Directory\n");
 		return (1);
 	}
-	// if (!good_map(path))
-	// {
-	// 	fprintf(stderr, "BadMap Format\n");
-	// 	return (1);
-	// }
+	if (!good_map(path))
+	{
+		fprintf(stderr, "BadMap Format\n");
+		return (1);
+	}
 	memset(&g, 0, sizeof(g));
 	init_map(&g.cub.map, path);
 	g.player.x = g.cub.map.player_x + 0.5;
