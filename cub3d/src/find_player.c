@@ -1,23 +1,45 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   good_map.c                                         :+:      :+:    :+:   */
+/*   find_player.c                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: mmestron <mmestron@student.fr>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/03/07 14:39:49 by mmestron          #+#    #+#             */
-/*   Updated: 2026/03/07 14:39:49 by mmestron         ###   ########.fr       */
+/*   Created: 2026/03/07 14:34:24 by mmestron          #+#    #+#             */
+/*   Updated: 2026/03/07 14:34:24 by mmestron         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <cub3d.h>
 
-int	good_map(char *path_map)
+static int	is_player(char c)
 {
-	t_cub	cub;
+	return (c == 'N' || c == 'S' || c == 'E' || c == 'W');
+}
 
-	if (!parse_cub(&cub, path_map))
-		return (0);
-	free_cub(&cub);
-	return (1);
+int	find_player(t_map *map)
+{
+	int	x;
+	int	y;
+	int	count;
+
+	y = 0;
+	count = 0;
+	while (map->grid[y])
+	{
+		x = 0;
+		while (map->grid[y][x])
+		{
+			if (is_player(map->grid[y][x]))
+			{
+				map->player_dir = map->grid[y][x];
+				map->player_x = x;
+				map->player_y = y;
+				count++;
+			}
+			x++;
+		}
+		y++;
+	}
+	return (count == 1);
 }

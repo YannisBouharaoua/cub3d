@@ -5,8 +5,8 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: mmestron <mmestron@student.fr>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/02/04 14:28:14 by yabouhar          #+#    #+#             */
-/*   Updated: 2026/02/13 15:25:15 by mmestron         ###   ########.fr       */
+/*   Created: 2026/03/07 14:44:42 by mmestron          #+#    #+#             */
+/*   Updated: 2026/03/07 14:44:42 by mmestron         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,52 +14,48 @@
 
 static double	dir_to_angle(char c)
 {
-	const double	pi = 3.14159265358979323846;
-
 	if (c == 'N')
-		return (-pi / 2.0);
+		return (-PI / 2.0);
 	if (c == 'S')
-		return (pi / 2.0);
+		return (PI / 2.0);
 	if (c == 'W')
-		return (pi);
+		return (PI);
 	return (0.0);
+}
+
+static void	setup_game(t_game *game)
+{
+	game->player.x = game->cub.map.player_x + 0.5;
+	game->player.y = game->cub.map.player_y + 0.5;
+	game->player.angle = dir_to_angle(game->cub.map.player_dir);
+	game->ceil_color = (game->cub.ceiling.r << 16)
+		| (game->cub.ceiling.g << 8) | game->cub.ceiling.b;
+	game->floor_color = (game->cub.floor.r << 16)
+		| (game->cub.floor.g << 8) | game->cub.floor.b;
 }
 
 int	main(int ac, char **av)
 {
-	t_game	g;
-	char	*path;
+	t_game	game;
 
-	if (ac < 2)
+	if (ac != 2)
+		return (print_error("usage: ./cub3D <map.cub>"), 1);
+	init_game_struct(&game);
+	if (!parse_cub(&game.cub, av[1]))
+		return (1);
+	setup_game(&game);
+	if (!mlx_setup(&game, 1024, 768, "cub3D"))
 	{
-		fprintf(stderr, "Usage: %s <map.cub>\n", av[0]);
+		mlx_destroy(&game);
+		free_cub(&game.cub);
 		return (1);
 	}
-	path = av[1];
-	if (!not_directory(path))
-	{
-		fprintf(stderr, "Is a Directory\n");
-		return (1);
-	}
-	if (!good_map(path))
-	{
-		fprintf(stderr, "BadMap Format\n");
-		return (1);
-	}
-	memset(&g, 0, sizeof(g));
-	init_map(&g.cub.map, path);
-	g.player.x = g.cub.map.player_x + 0.5;
-	g.player.y = g.cub.map.player_y + 0.5;
-	g.player.angle = dir_to_angle(g.cub.map.player_dir);
-	g.ceil_color = 0x777777;
-	g.floor_color = 0x222222;
-	if (!mlx_setup(&g, 1024, 768, "cub3D"))
-		return (1);
-	mlx_hook(g.mlx.win, 2, 1L << 0, key_press, &g);
-	mlx_hook(g.mlx.win, 3, 1L << 1, key_release, &g);
-	mlx_hook(g.mlx.win, 17, 0, on_close, &g);
-	mlx_loop_hook(g.mlx.mlx, render_frame, &g);
-	mlx_loop(g.mlx.mlx);
-	mlx_destroy(&g);
+	mlx_hook(game.mlx.win, 2, 1L << 0, key_press, &game);
+	mlx_hook(game.mlx.win, 3, 1L << 1, key_release, &game);
+	mlx_hook(game.mlx.win, 17, 0, on_close, &game);
+	mlx_loop_hook(game.mlx.mlx, render_frame, &game);
+	mlx_loop(game.mlx.mlx);
+	mlx_destroy(&game);
+	free_cub(&game.cub);
 	return (0);
 }

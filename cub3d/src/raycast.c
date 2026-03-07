@@ -6,156 +6,130 @@
 /*   By: coder <coder@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/04 17:10:00 by coder             #+#    #+#             */
-/*   Updated: 2026/02/04 17:10:00 by coder            ###   ########.fr       */
+/*   Updated: 2026/03/07 03:27:17 by mmestron         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <cub3d.h>
 
-#ifndef M_PI
-# define M_PI 3.14159265358979323846
-#endif
+static void	init_ray(t_game *g, t_ray *r, int x)
+{
+	double	camera_x;
+	double	angle;
 
-#define FOV (M_PI / 3.0)
+	camera_x = (2.0 * x / (double)g->mlx.w) - 1.0;
+	angle = g->player.angle + atan(camera_x * tan(PI / 6.0));
+	r->ray_dir_x = cos(angle);
+	r->ray_dir_y = sin(angle);
+	r->map_x = (int)g->player.x;
+	r->map_y = (int)g->player.y;
+	r->delta_x = fabs(1.0 / (r->ray_dir_x + (r->ray_dir_x == 0) * 1e-9));
+	r->delta_y = fabs(1.0 / (r->ray_dir_y + (r->ray_dir_y == 0) * 1e-9));
+	r->step_x = 1;
+	r->step_y = 1;
+	r->side_x = (r->map_x + 1.0 - g->player.x) * r->delta_x;
+	r->side_y = (r->map_y + 1.0 - g->player.y) * r->delta_y;
+	if (r->ray_dir_x < 0)
+		r->step_x = -1;
+	if (r->ray_dir_x < 0)
+		r->side_x = (g->player.x - r->map_x) * r->delta_x;
+	if (r->ray_dir_y < 0)
+		r->step_y = -1;
+	if (r->ray_dir_y < 0)
+		r->side_y = (g->player.y - r->map_y) * r->delta_y;
+}
+
+static void	step_dda(t_game *g, t_ray *r)
+{
+	int	steps;
+
+	steps = g->cub.map.width * g->cub.map.height + 256;
+	r->side = 0;
+	while (steps-- > 0)
+	{
+		if (r->side_x < r->side_y)
+		{
+			r->side_x += r->delta_x;
+			r->map_x += r->step_x;
+			r->side = 0;
+		}
+		else
+		{
+			r->side_y += r->delta_y;
+			r->map_y += r->step_y;
+			r->side = 1;
+		}
+		if (map_is_wall(&g->cub.map, r->map_x, r->map_y))
+			return ;
+	}
+}
+
+static t_img	*compute_wall(t_game *g, t_ray *r)
+{
+	if (r->side == 0)
+		r->perp = (r->map_x - g->player.x + (1 - r->step_x) / 2.0)
+			/ r->ray_dir_x;
+	else
+		r->perp = (r->map_y - g->player.y + (1 - r->step_y) / 2.0)
+			/ r->ray_dir_y;
+	if (r->perp < 0.0001)
+		r->perp = 0.0001;
+	r->line_h = (int)(g->mlx.h / r->perp);
+	r->start = -r->line_h / 2 + g->mlx.h / 2;
+	r->end = r->line_h / 2 + g->mlx.h / 2;
+	if (r->start < 0)
+		r->start = 0;
+	if (r->end >= g->mlx.h)
+		r->end = g->mlx.h - 1;
+	if (r->side == 0 && r->step_x > 0)
+		return (&g->tex_ea);
+	if (r->side == 0 && r->step_x < 0)
+		return (&g->tex_we);
+	if (r->side == 1 && r->step_y > 0)
+		return (&g->tex_so);
+	return (&g->tex_no);
+}
+
+static void	draw_column(t_game *g, t_ray *r, t_img *tex, int x)
+{
+	int	y;
+	int	tex_y;
+
+	r->wall_x = g->player.x + r->perp * r->ray_dir_x;
+	if (r->side == 0)
+		r->wall_x = g->player.y + r->perp * r->ray_dir_y;
+	r->wall_x -= floor(r->wall_x);
+	r->tex_x = (int)(r->wall_x * tex->w);
+	if ((r->side == 0 && r->ray_dir_x > 0)
+		|| (r->side == 1 && r->ray_dir_y < 0))
+		r->tex_x = tex->w - r->tex_x - 1;
+	r->step = (double)tex->h / (double)r->line_h;
+	r->pos = (r->start + r->line_h / 2 - g->mlx.h / 2) * r->step;
+	y = r->start;
+	while (y <= r->end)
+	{
+		tex_y = (int)r->pos;
+		if (tex->addr)
+			put_pixel(g, x, y, *(int *)(tex->addr + tex_y * tex->line_len
+					+ r->tex_x * (tex->bpp / 8)));
+		r->pos += r->step;
+		y++;
+	}
+}
 
 void	cast_rays(t_game *g)
 {
-	int		w;
-	int		h;
 	int		x;
+	t_ray	r;
+	t_img	*tex;
 
-	if (!g)
-		return ;
-	w = g->mlx.w;
-	h = g->mlx.h;
 	x = 0;
-	while (x < w)
+	while (x < g->mlx.w)
 	{
-		double	camera_x;
-		double	ray_angle;
-		double	ray_dir_x;
-		double	ray_dir_y;
-		int		map_x;
-		int		map_y;
-		double	delta_dist_x;
-		double	delta_dist_y;
-		double	side_dist_x;
-		double	side_dist_y;
-		int		step_x;
-		int		step_y;
-		int		hit;
-		int		side;
-		int		max_steps;
-		double	perp;
-		int		line_h;
-		int		draw_start;
-		int		draw_end;
-		int		draw_start_raw;
-		double	wall_x;
-		int		tex_x;
-		int		tex_y;
-		double	tex_pos;
-		double	tex_step;
-		int		y;
-
-		camera_x = (2.0 * x / (double)w) - 1.0;
-		ray_angle = g->player.angle + atan(camera_x * tan(FOV / 2.0));
-		ray_dir_x = cos(ray_angle);
-		ray_dir_y = sin(ray_angle);
-		map_x = (int)g->player.x;
-		map_y = (int)g->player.y;
-		delta_dist_x = (ray_dir_x == 0) ? 1e30 : fabs(1.0 / ray_dir_x);
-		delta_dist_y = (ray_dir_y == 0) ? 1e30 : fabs(1.0 / ray_dir_y);
-		if (ray_dir_x < 0)
-		{
-			step_x = -1;
-			side_dist_x = (g->player.x - map_x) * delta_dist_x;
-		}
-		else
-		{
-			step_x = 1;
-			side_dist_x = (map_x + 1.0 - g->player.x) * delta_dist_x;
-		}
-		if (ray_dir_y < 0)
-		{
-			step_y = -1;
-			side_dist_y = (g->player.y - map_y) * delta_dist_y;
-		}
-		else
-		{
-			step_y = 1;
-			side_dist_y = (map_y + 1.0 - g->player.y) * delta_dist_y;
-		}
-		hit = 0;
-		side = 0;
-		max_steps = g->cub.map.width * g->cub.map.height + 256;
-		if (max_steps < 256)
-			max_steps = 256;
-		while (!hit && max_steps-- > 0)
-		{
-			if (side_dist_x < side_dist_y)
-			{
-				side_dist_x += delta_dist_x;
-				map_x += step_x;
-				side = 0;
-			}
-			else
-			{
-				side_dist_y += delta_dist_y;
-				map_y += step_y;
-				side = 1;
-			}
-			if (map_is_wall(&g->cub.map, map_x, map_y))
-				hit = 1;
-		}
-		if (side == 0)
-			perp = (map_x - g->player.x + (1 - step_x) / 2.0) / ray_dir_x;
-		else
-			perp = (map_y - g->player.y + (1 - step_y) / 2.0) / ray_dir_y;
-		if (perp < 0.0001)
-			perp = 0.0001;
-		line_h = (int)(h / perp);
-		if (line_h < 1)
-			line_h = 1;
-		draw_start_raw = -line_h / 2 + h / 2;
-		draw_start = draw_start_raw;
-		draw_end = line_h / 2 + h / 2;
-		if (draw_start < 0)
-			draw_start = 0;
-		if (draw_end >= h)
-			draw_end = h - 1;
-		if (side == 0)
-			wall_x = g->player.y + perp * ray_dir_y;
-		else
-			wall_x = g->player.x + perp * ray_dir_x;
-		wall_x -= floor(wall_x);
-		tex_x = (int)(wall_x * g->wall_tex.w);
-		if ((side == 0 && ray_dir_x > 0) || (side == 1 && ray_dir_y < 0))
-			tex_x = g->wall_tex.w - tex_x - 1;
-		if (tex_x < 0)
-			tex_x = 0;
-		if (tex_x >= g->wall_tex.w)
-			tex_x = g->wall_tex.w - 1;
-		tex_step = (double)g->wall_tex.h / (double)line_h;
-		tex_pos = (draw_start - draw_start_raw) * tex_step;
-		y = draw_start;
-		while (y <= draw_end)
-		{
-			if (g->wall_tex.addr && line_h > 0)
-			{
-				tex_y = (int)tex_pos;
-				if (tex_y < 0)
-					tex_y = 0;
-				if (tex_y >= g->wall_tex.h)
-					tex_y = g->wall_tex.h - 1;
-				put_pixel(g, x, y, *(int *)(g->wall_tex.addr + tex_y
-						* g->wall_tex.line_len + tex_x * (g->wall_tex.bpp / 8)));
-				tex_pos += tex_step;
-			}
-			else
-				put_pixel(g, x, y, 0x00AA00);
-			y++;
-		}
+		init_ray(g, &r, x);
+		step_dda(g, &r);
+		tex = compute_wall(g, &r);
+		draw_column(g, &r, tex, x);
 		x++;
 	}
 }

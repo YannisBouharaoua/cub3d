@@ -3,34 +3,23 @@
 /*                                                        :::      ::::::::   */
 /*   parsing.c                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: yabouhar <yabouhar@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmestron <mmestron@student.fr>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/02/04 14:28:19 by yabouhar          #+#    #+#             */
-/*   Updated: 2026/02/04 16:30:25 by yabouhar         ###   ########.fr       */
+/*   Created: 2026/03/07 14:07:03 by mmestron          #+#    #+#             */
+/*   Updated: 2026/03/07 14:07:03 by mmestron         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <cub3d.h>
-#include <stdio.h>
 
-static void	print_map(t_map *map)
+static void	put_err(char *s)
 {
-	int	y;
-
-	if (!map || !map->grid)
+	if (!s)
 		return ;
-	printf("Map %dx%d, player %c at (%d,%d)\n",
-		map->width, map->height, map->player_dir,
-		map->player_x, map->player_y);
-	y = 0;
-	while (map->grid[y])
-	{
-		printf("%s\n", map->grid[y]);
-		y++;
-	}
+	write(2, s, str_len(s));
 }
 
-int not_directory(char *str)
+int	not_directory(char *str)
 {
 	int	fd;
 
@@ -41,29 +30,25 @@ int not_directory(char *str)
 	return (0);
 }
 
-int parsing(int ac, char **av)
+int	print_error(char *msg)
 {
-	char	*path_map;
-	t_cub	cub;
+	put_err("Error\n");
+	put_err(msg);
+	put_err("\n");
+	return (0);
+}
 
-	if (ac < 2)
-		return (1);
-	path_map = av[1];
-	if (not_directory(path_map))
+char	*str_chr(const char *s, int c)
+{
+	if (!s)
+		return (NULL);
+	while (*s)
 	{
-		if (good_map(path_map))
-		{
-			printf("GoodMap\n");
-			init_map(&cub.map, path_map);
-			print_map(&cub.map);
-			return (0);
-		}
-		printf("BadMap Format\n");
-		printf("Debug: forcing init_map/print_map despite bad format\n");
-		init_map(&cub.map, path_map);
-		print_map(&cub.map);
-		return (1);
+		if (*s == (char)c)
+			return ((char *)s);
+		s++;
 	}
-	printf("Is a Directory\n");
-	return (1);
+	if (c == '\0')
+		return ((char *)s);
+	return (NULL);
 }

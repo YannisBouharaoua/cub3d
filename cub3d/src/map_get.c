@@ -20,7 +20,7 @@ char	map_get(t_map *m, int mx, int my)
 		return (' ');
 	if (!m->grid[my])
 		return (' ');
-	if (mx >= (int)strlen(m->grid[my]))
+	if (mx >= (int)str_len(m->grid[my]))
 		return (' ');
 	return (m->grid[my][mx]);
 }

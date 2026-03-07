@@ -22,6 +22,7 @@ char	*get_next_line(int fd);
 char	*gnl_strchr(char *s, char c);
 char	*gnl_strdup(const char *s, int ln);
 char	*extract_line(char **buffer);
+void	gnl_clear(void);
 
 int		read_it(int fd, char **buffer, int *reader);
 
