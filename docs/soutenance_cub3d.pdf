@@ -1,0 +1,1237 @@
+%PDF-1.4
+%‚„œ”
+1 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+2 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>
+endobj
+4 0 obj
+<< /Length 3877 >>
+stream
+BT /F2 18 Tf 1 0 0 1 48 792 Tm (cub3D - Support de soutenance) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 756 Tm (Version du document: etat du code au 7 mars 2026.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 744 Tm (Depot analyse: `cub3d/` dans ce repository.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 732 Tm (Objectif: permettre a deux personnes de revoir rapidement tout le projet, de comprendre le flux) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 720 Tm (d'execution complet, et de preparer une soutenance 42 sur le mandatory uniquement.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 700 Tm (---) Tj ET
+BT /F2 14 Tf 1 0 0 1 48 672 Tm (1. Vue d'ensemble du projet) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 644 Tm (`cub3D` est un mini moteur 3D en vue subjective base sur le raycasting. On ne dessine pas de) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 632 Tm (vrais volumes 3D. On part d'une carte 2D composee de cases, puis on envoie un rayon pour chaque) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 620 Tm (colonne de l'ecran. Chaque rayon touche un mur, et cette distance est convertie en hauteur de) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 608 Tm (mur affichee sur l'ecran. C'est exactement l'idee historique utilisee par des jeux comme) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 596 Tm (Wolfenstein 3D.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 576 Tm (Dans ce projet, il y a quatre grands blocs:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 556 Tm (1. le parsing du fichier `.cub`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 544 Tm (2. l'initialisation du moteur et de MiniLibX) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 532 Tm (3. la boucle de jeu: input, mouvement, rendu) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 520 Tm (4. le nettoyage complet en cas de fermeture normale ou d'erreur) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 500 Tm (Le mandatory demande en particulier:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 480 Tm (- MiniLibX) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 468 Tm (- une fenetre qui reste exploitable) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 456 Tm (- quatre textures de murs distinctes selon l'orientation `N/S/E/W`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 444 Tm (- deux couleurs differentes pour le sol et le plafond) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 432 Tm (- les fleches gauche/droite pour tourner) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 420 Tm (- `W`, `A`, `S`, `D` pour se deplacer) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 408 Tm (- `ESC` et la croix rouge pour quitter proprement) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 396 Tm (- un fichier `.cub` en argument) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 384 Tm (- une map valide, fermee, avec un seul joueur) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 372 Tm (- un message `Error` suivi d'un message explicite en cas de probleme) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 352 Tm (Le code actuel respecte ce cadre sans activer de bonus.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 332 Tm (---) Tj ET
+BT /F2 14 Tf 1 0 0 1 48 304 Tm (2. Les structures de donnees importantes) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 276 Tm (Tout le projet repose sur quelques structures definies dans `cub3d/includes/cub3d.h`.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 250 Tm (2.1`t_color`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 227 Tm (`typedef struct s_color`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 207 Tm (Cette structure stocke trois entiers `r`, `g`, `b`.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 195 Tm (Elle sert pendant le parsing pour memoriser les couleurs du sol et du plafond avant de les) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 183 Tm (convertir en entier `0xRRGGBB` utilisable au rendu.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 157 Tm (2.2`t_map`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 134 Tm (`typedef struct s_map`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 114 Tm (Cette structure represente la carte 2D finale:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 94 Tm (- `grid`: tableau de chaines, une ligne par ligne de map) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 82 Tm (- `width`: largeur maximale de la map) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 70 Tm (- `height`: nombre de lignes) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 58 Tm (- `player_dir`: orientation initiale `N`, `S`, `E` ou `W`) Tj ET
+BT /F1 9 Tf 1 0 0 1 505 24 Tm (Page 1/23) Tj ET
+endstream
+endobj
+5 0 obj
+<< /Length 3024 >>
+stream
+BT /F1 10 Tf 1 0 0 1 48 800 Tm (- `player_x`, `player_y`: position de depart dans la grille) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 780 Tm (C'est la structure logique du monde de jeu.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 754 Tm (2.3`t_texture`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 731 Tm (`typedef struct s_texture`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 711 Tm (Cette structure contient les chemins texte vers les quatre fichiers XPM:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 691 Tm (- `north`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 679 Tm (- `south`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 667 Tm (- `west`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 655 Tm (- `east`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 635 Tm (Attention: ici on ne stocke encore que des chemins, pas les images chargees en memoire.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 609 Tm (2.4`t_cub`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 586 Tm (`typedef struct s_cub`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 566 Tm (C'est la structure de sortie du parsing. Elle contient:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 546 Tm (- les chemins des textures dans `tex`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 534 Tm (- les couleurs du sol et du plafond) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 522 Tm (- la map finale) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 502 Tm (On peut la voir comme la description complete de la scene.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 476 Tm (2.5`t_player`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 453 Tm (`typedef struct s_player`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 433 Tm (Cette structure represente l'etat runtime du joueur:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 413 Tm (- `x`, `y`: position reelle en `double`, au centre des cases) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 401 Tm (- `angle`: angle de vue en radians) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 381 Tm (Le parsing donne un point de depart en grille. Ensuite `setup_game\(\)` convertit cette position) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 369 Tm (en coordonnees reelles.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 343 Tm (2.6`t_img`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 320 Tm (`typedef struct s_img`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 300 Tm (Cette structure encapsule une image MiniLibX:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 280 Tm (- `img`: pointeur MLX brut) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 268 Tm (- `addr`: adresse du buffer pixel) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 256 Tm (- `bpp`: bits par pixel) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 244 Tm (- `line_len`: taille d'une ligne memoire) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 232 Tm (- `endian`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 220 Tm (- `w`, `h`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 200 Tm (Elle est utilisee pour:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 180 Tm (- la frame complete a dessiner) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 168 Tm (- chaque texture murale chargee) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 142 Tm (2.7`t_ray`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 119 Tm (`typedef struct s_ray`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 99 Tm (C'est la structure de calcul d'un rayon pendant le raycasting. Elle contient tout ce qui sert a) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 87 Tm (tracer une colonne:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 67 Tm (- direction du rayon) Tj ET
+BT /F1 9 Tf 1 0 0 1 505 24 Tm (Page 2/23) Tj ET
+endstream
+endobj
+6 0 obj
+<< /Length 3624 >>
+stream
+BT /F1 10 Tf 1 0 0 1 48 800 Tm (- coordonnees de case courante) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 788 Tm (- distances DDA \(`delta_x`, `delta_y`, `side_x`, `side_y`\)) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 776 Tm (- sens des pas \(`step_x`, `step_y`\)) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 764 Tm (- type de face touchee \(`side`\)) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 752 Tm (- distance perpendiculaire \(`perp`\)) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 740 Tm (- hauteur de ligne a dessiner \(`line_h`\)) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 728 Tm (- bornes ecran \(`start`, `end`\)) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 716 Tm (- coordonnees de texture \(`wall_x`, `tex_x`, `step`, `pos`\)) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 690 Tm (2.8`t_mlx`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 667 Tm (`typedef struct s_mlx`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 647 Tm (Cette structure regroupe les pointeurs MiniLibX:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 627 Tm (- `mlx`: contexte global) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 615 Tm (- `win`: fenetre) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 603 Tm (- `w`, `h`: taille de la fenetre) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 591 Tm (- `frame`: image hors ecran que l'on remplit avant affichage) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 565 Tm (2.9`t_game`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 542 Tm (`typedef struct s_game`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 522 Tm (C'est la structure runtime principale. Elle regroupe tout:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 502 Tm (- `cub`: la scene parsee) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 490 Tm (- `mlx`: le contexte graphique) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 478 Tm (- `player`: l'etat du joueur) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 466 Tm (- `tex_no`, `tex_so`, `tex_we`, `tex_ea`: textures deja chargees par MLX) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 454 Tm (- `floor_color`, `ceil_color`: couleurs compactees en entier) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 442 Tm (- `keys[1024]`: etat des actions de clavier) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 422 Tm (C'est la structure qui circule dans la boucle du jeu.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 396 Tm (2.10 `t_gm`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 373 Tm (`typedef struct s_gm`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 353 Tm (Cette structure est un contexte temporaire de parsing. Elle sert uniquement pendant la lecture) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 341 Tm (du `.cub`.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 321 Tm (Elle stocke:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 301 Tm (- le descripteur de fichier) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 289 Tm (- la ligne en cours de lecture) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 277 Tm (- les flags indiquant si chaque config a ete vue) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 265 Tm (- les lignes de map en construction) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 253 Tm (- les dimensions en cours) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 241 Tm (- une version paddee de la map pour verifier la fermeture) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 215 Tm (2.11 `t_flood`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 192 Tm (`typedef struct s_flood`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 172 Tm (Cette structure n'est pas utilisee dans la version actuelle. C'est vraisemblablement un reste) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 160 Tm (d'une approche precedente de validation de map par flood fill. Elle n'a pas d'effet sur le) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 148 Tm (runtime actuel.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 128 Tm (---) Tj ET
+BT /F2 14 Tf 1 0 0 1 48 100 Tm (3. Ordre d'execution complet du programme) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 72 Tm (C'est la partie la plus importante pour la soutenance. Quand l'evaluateur demande "Que se) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 60 Tm (passe-t-il du lancement jusqu'au premier affichage?", il faut pouvoir raconter exactement le) Tj ET
+BT /F1 9 Tf 1 0 0 1 505 24 Tm (Page 3/23) Tj ET
+endstream
+endobj
+7 0 obj
+<< /Length 3580 >>
+stream
+BT /F1 10 Tf 1 0 0 1 48 800 Tm (chemin d'appel.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 774 Tm (3.1`main\(\)` dans `src/main.c`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 751 Tm (Le programme commence dans `main\(int ac, char **av\)`.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 731 Tm (Ordre reel:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 711 Tm (1. verifier qu'il y a exactement un argument) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 699 Tm (2. initialiser toute la structure `t_game`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 687 Tm (3. parser le fichier `.cub`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 675 Tm (4. convertir les donnees parsees en donnees runtime) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 663 Tm (5. initialiser MiniLibX et charger les textures) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 651 Tm (6. installer les hooks clavier / fermeture) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 639 Tm (7. lancer la boucle MLX) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 627 Tm (8. nettoyer a la sortie) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 607 Tm (Dans le code:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 587 Tm (- `print_error\("usage: ./cub3D <map.cub>"\)` si le nombre d'arguments est faux) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 575 Tm (- `init_game_struct\(&game\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 563 Tm (- `parse_cub\(&game.cub, av[1]\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 551 Tm (- `setup_game\(&game\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 539 Tm (- `mlx_setup\(&game, 1024, 768, "cub3D"\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 527 Tm (- `mlx_hook\(...\)` pour les evenements) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 515 Tm (- `mlx_loop_hook\(...\)` pour demander `render_frame\(\)` a chaque tour) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 503 Tm (- `mlx_loop\(...\)` pour confier la main a MLX) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 477 Tm (3.2`init_game_struct\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 454 Tm (Cette fonction appelle d'abord `init_cub\(\)` puis `init_images\(\)`.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 434 Tm (But:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 414 Tm (- mettre tous les pointeurs a `NULL`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 402 Tm (- mettre les dimensions a `0`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 390 Tm (- remettre les couleurs a des valeurs neutres) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 378 Tm (- remettre toutes les touches a `0`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 358 Tm (L'interet est simple: si une erreur arrive plus tard, le cleanup peut tester proprement ce qui a) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 346 Tm (deja ete alloue.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 320 Tm (3.3`parse_cub\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 297 Tm (Cette fonction construit toute la scene.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 277 Tm (Ordre interne:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 257 Tm (1. `init_cub\(cub\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 245 Tm (2. `check_path_map\(path_map\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 233 Tm (3. `init_gm\(&gm, cub\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 221 Tm (4. `open\(path_map, O_RDONLY\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 209 Tm (5. `read_cub_file\(&gm\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 197 Tm (6. `build_map\(&gm\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 185 Tm (7. retourner `1` si tout est bon, sinon nettoyer via `parse_fail\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 165 Tm (Le parsing est le bloc le plus important apres le raycasting. On le detaille dans le chapitre) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 153 Tm (suivant.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 127 Tm (3.4`setup_game\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 104 Tm (Une fois la scene validee, on passe du monde "parsing" au monde "runtime".) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 84 Tm (Cette fonction:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 64 Tm (- place le joueur au centre de sa case avec `+ 0.5`) Tj ET
+BT /F1 9 Tf 1 0 0 1 505 24 Tm (Page 4/23) Tj ET
+endstream
+endobj
+8 0 obj
+<< /Length 3495 >>
+stream
+BT /F1 10 Tf 1 0 0 1 48 800 Tm (- convertit `N/S/E/W` en angle en radians avec `dir_to_angle\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 788 Tm (- compacte `RGB` du plafond et du sol en entier 24 bits) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 768 Tm (Exemple:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 748 Tm (- si le joueur est sur la case `x = 10`, `y = 5`, la vraie position devient `10.5`, `5.5`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 736 Tm (- si le joueur regarde `N`, l'angle est `-PI / 2`) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 710 Tm (3.5`mlx_setup\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 687 Tm (Cette fonction realise deux choses:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 667 Tm (1. creer le contexte graphique) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 655 Tm (2. charger les quatre textures murales) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 635 Tm (Ordre interne:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 615 Tm (- `setup_mlx_core\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 603 Tm (- `load_texture\(\)` pour `north`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 591 Tm (- `load_texture\(\)` pour `south`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 579 Tm (- `load_texture\(\)` pour `west`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 567 Tm (- `load_texture\(\)` pour `east`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 547 Tm (Si une seule de ces etapes echoue, on appelle `mlx_destroy\(\)` puis on retourne `0`.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 521 Tm (3.6Installation des hooks) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 498 Tm (Dans `main\(\)`, trois hooks sont installes:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 478 Tm (- evenement `2`: appui touche -> `key_press`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 466 Tm (- evenement `3`: relachement touche -> `key_release`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 454 Tm (- evenement `17`: fermeture fenetre -> `on_close`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 434 Tm (Puis `mlx_loop_hook\(\)` demande a MLX d'appeler `render_frame\(\)` regulierement.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 408 Tm (3.7Boucle principale) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 385 Tm (Une fois dans `mlx_loop\(\)`, le programme vit selon ce schema:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 365 Tm (1. MLX detecte les evenements utilisateur) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 353 Tm (2. les hooks mettent a jour l'etat des touches) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 341 Tm (3. `render_frame\(\)` est appelee) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 329 Tm (4. `render_frame\(\)` met a jour le joueur) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 317 Tm (5. `render_frame\(\)` dessine plafond + sol) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 305 Tm (6. `render_frame\(\)` lance `cast_rays\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 293 Tm (7. l'image calculee est envoyee dans la fenetre) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 281 Tm (8. le cycle recommence) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 261 Tm (---) Tj ET
+BT /F2 14 Tf 1 0 0 1 48 233 Tm (4. Parsing complet du fichier `.cub`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 205 Tm (Le parsing est volontairement strict. Il doit garantir que le moteur recupere une scene) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 193 Tm (coherente.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 167 Tm (4.1`check_path_map\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 144 Tm (Cette fonction verifie deux points avant meme d'ouvrir le fichier:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 124 Tm (- l'extension doit etre `.cub` via `gm_has_cub_ext\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 112 Tm (- le chemin ne doit pas etre un dossier via `not_directory\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 92 Tm (Si ce test echoue, on sort immediatement avec un message d'erreur explicite.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 66 Tm (4.2`init_gm\(\)`) Tj ET
+BT /F1 9 Tf 1 0 0 1 505 24 Tm (Page 5/23) Tj ET
+endstream
+endobj
+9 0 obj
+<< /Length 3604 >>
+stream
+BT /F1 10 Tf 1 0 0 1 48 800 Tm (`init_gm\(\)` prepare le contexte temporaire `t_gm`:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 780 Tm (- `fd = -1`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 768 Tm (- `line = NULL`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 756 Tm (- `in_map = 0`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 744 Tm (- flags des configs a `0`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 732 Tm (- dimensions a `0`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 720 Tm (- tableaux a `NULL`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 700 Tm (C'est l'equivalent parsing de `init_game_struct\(\)`.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 674 Tm (4.3`read_cub_file\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 651 Tm (Cette fonction lit le fichier ligne par ligne avec `get_next_line\(\)`.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 631 Tm (Ordre:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 611 Tm (1. `gm->line = get_next_line\(gm->fd\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 599 Tm (2. tant qu'on a une ligne:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 587 Tm (   - appeler `read_line\(gm\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 575 Tm (   - si erreur: liberer la ligne courante, vider GNL, retourner `0`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 563 Tm (   - sinon liberer la ligne et lire la suivante) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 551 Tm (3. a la fin, appeler `gnl_clear\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 539 Tm (4. retourner `1`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 519 Tm (Le point important: le buffer statique de `get_next_line` est nettoye explicitement avec) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 507 Tm (`gnl_clear\(\)` pour eviter qu'il reste de la memoire allouee entre deux parse.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 481 Tm (4.4`read_line\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 458 Tm (C'est la vraie logique de classification d'une ligne.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 438 Tm (Ordre:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 418 Tm (1. `trim_eol\(\)` supprime `) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 406 Tm (` et `) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 394 Tm (`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 382 Tm (2. si on n'est pas encore dans la map et que la ligne est vide, on l'accepte) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 370 Tm (3. si on n'est pas encore dans la map et que la ligne ressemble a une ligne de map:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 358 Tm (   - on verifie que toutes les configs ont deja ete lues avec `has_all_config\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 346 Tm (   - on bascule `gm->in_map = 1`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 334 Tm (4. si on est dans la map:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 322 Tm (   - la ligne doit etre une vraie ligne de map) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 310 Tm (   - on l'ajoute avec `store_map_line\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 298 Tm (5. sinon, on attend une ligne de config:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 286 Tm (   - `gm_is_config_line\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 274 Tm (   - `gm_parse_config\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 254 Tm (C'est cette fonction qui impose la regle du sujet: la map doit toujours etre la derniere partie) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 242 Tm (du fichier.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 216 Tm (4.5`gm_is_config_line\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 193 Tm (Cette fonction ne parse pas encore. Elle verifie juste si la ligne commence par un identifiant) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 181 Tm (valide:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 161 Tm (- `NO`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 149 Tm (- `SO`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 137 Tm (- `WE`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 125 Tm (- `EA`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 113 Tm (- `F`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 101 Tm (- `C`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 81 Tm (Elle tolere les espaces avant l'identifiant.) Tj ET
+BT /F1 9 Tf 1 0 0 1 505 24 Tm (Page 6/23) Tj ET
+endstream
+endobj
+10 0 obj
+<< /Length 3547 >>
+stream
+BT /F2 12 Tf 1 0 0 1 48 800 Tm (4.6`gm_parse_config\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 777 Tm (Cette fonction distribue vers le bon parseur.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 757 Tm (Cas possibles:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 737 Tm (- `NO ...` -> `set_texture\(&north, ...\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 725 Tm (- `SO ...` -> `set_texture\(&south, ...\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 713 Tm (- `WE ...` -> `set_texture\(&west, ...\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 701 Tm (- `EA ...` -> `set_texture\(&east, ...\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 689 Tm (- `F ...` -> `gm_set_color\(&floor, ...\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 677 Tm (- `C ...` -> `gm_set_color\(&ceiling, ...\)`) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 651 Tm (4.7`set_texture\(\)` et la logique texture) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 628 Tm (`set_texture\(\)`:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 608 Tm (1. appelle `trim_token\(\)` pour nettoyer les espaces autour du chemin) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 596 Tm (2. refuse les doublons via `*flag`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 584 Tm (3. verifie que le chemin existe et n'est pas un dossier avec `check_path\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 572 Tm (4. stocke le chemin alloue dans la structure `t_cub`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 552 Tm (Important a expliquer en soutenance:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 532 Tm (- a ce stade, on verifie surtout le chemin) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 520 Tm (- la validite reelle XPM sera confirmee plus tard par `mlx_xpm_file_to_image\(\)`) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 494 Tm (4.8`gm_set_color\(\)` et le parsing RGB) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 471 Tm (`gm_set_color\(\)` delegue a `parse_rgb\(\)`.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 451 Tm (`parse_rgb\(\)` fait le travail suivant:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 431 Tm (1. lire `r` avec `parse_value\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 419 Tm (2. verifier `0 <= r <= 255`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 407 Tm (3. verifier une virgule) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 395 Tm (4. lire `g`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 383 Tm (5. verifier `0 <= g <= 255`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 371 Tm (6. verifier une virgule) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 359 Tm (7. lire `b`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 347 Tm (8. verifier `0 <= b <= 255`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 335 Tm (9. verifier qu'il ne reste rien d'illicite apres) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 315 Tm (Cela accepte par exemple:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 295 Tm (- `F 220,100,0`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 283 Tm (- `F   220, 100 , 0`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 263 Tm (Et cela refuse:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 243 Tm (- des valeurs negatives) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 231 Tm (- des valeurs > 255) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 219 Tm (- des composantes manquantes) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 207 Tm (- du texte parasite apres les nombres) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 195 Tm (- un doublon de `F` ou `C`) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 169 Tm (4.9`store_map_line\(\)` et `gm_push_line\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 146 Tm (Quand une ligne de map est validee:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 126 Tm (- `gm_push_line\(\)` l'ajoute au tableau dynamique `gm->lines`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 114 Tm (- `store_map_line\(\)` met a jour `gm->width` si cette ligne est la plus longue) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 94 Tm (`gm_push_line\(\)` appelle `gm_expand\(\)` si le tableau doit grandir. C'est un tableau dynamique) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 82 Tm (classique qui double sa capacite.) Tj ET
+BT /F1 9 Tf 1 0 0 1 505 24 Tm (Page 7/23) Tj ET
+endstream
+endobj
+11 0 obj
+<< /Length 3758 >>
+stream
+BT /F2 12 Tf 1 0 0 1 48 800 Tm (4.10 `build_map\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 777 Tm (Apres lecture complete du fichier, `build_map\(\)` valide la geometrie finale.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 757 Tm (Ordre interne:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 737 Tm (1. verifier qu'on a bien lu une map et qu'elle a au moins une ligne) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 725 Tm (2. creer une version paddee avec `gm_pad_lines\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 713 Tm (3. verifier qu'elle est fermee avec `gm_is_closed\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 701 Tm (4. liberer la version paddee temporaire) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 689 Tm (5. affecter la vraie map a `cub->map` avec `assign_map\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 677 Tm (6. verifier qu'il y a exactement un joueur avec `find_player\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 657 Tm (Si la map n'est pas fermee ou si le joueur n'est pas valide, la fonction retourne `0`.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 631 Tm (4.11 Pourquoi `gm_pad_lines\(\)` est une bonne solution) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 608 Tm (Le sujet dit que les espaces sont une partie valide de la map.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 588 Tm (Le probleme est que des lignes peuvent avoir des longueurs differentes. Si on essaye de verifier) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 576 Tm (la fermeture directement sur les chaines d'origine, il faut gerer une quantite de cas limites) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 564 Tm (enorme.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 544 Tm (La strategie choisie ici est propre:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 524 Tm (1. on cree une grille plus grande, remplie d'espaces) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 512 Tm (2. on copie la map au milieu, decalee d'une case) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 500 Tm (3. on teste chaque case jouable \(`0`, `N`, `S`, `E`, `W`\)) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 488 Tm (4. si une de ses quatre cases voisines est un espace, alors la map est ouverte) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 468 Tm (Cette technique transforme tous les "trous" et les bords hors carte en espaces. C'est simple,) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 456 Tm (robuste et tres facile a expliquer a l'oral.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 430 Tm (4.12 `find_player\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 407 Tm (Cette fonction parcourt toute la map:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 387 Tm (- chaque fois qu'elle voit `N`, `S`, `E` ou `W`, elle stocke la position et l'orientation) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 375 Tm (- elle incremente un compteur) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 363 Tm (- elle retourne `1` seulement si le compteur final vaut exactement `1`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 343 Tm (Donc:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 323 Tm (- `0` joueur -> erreur) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 311 Tm (- `2` joueurs ou plus -> erreur) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 285 Tm (4.13 `parse_fail\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 262 Tm (C'est le garde-fou memoire du parsing.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 242 Tm (En cas d'erreur, il:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 222 Tm (- ferme le fichier si necessaire) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 210 Tm (- libere la ligne courante si necessaire) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 198 Tm (- libere les lignes de map accumulees) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 186 Tm (- vide le buffer statique de GNL) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 174 Tm (- libere ce qui a deja ete stocke dans `t_cub`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 162 Tm (- affiche `Error` + message) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 142 Tm (Cette fonction est une raison importante pour laquelle le projet ne fuit pas en cas d'erreur de) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 130 Tm (parsing.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 110 Tm (---) Tj ET
+BT /F2 14 Tf 1 0 0 1 48 82 Tm (5. get_next_line dans ce projet) Tj ET
+BT /F1 9 Tf 1 0 0 1 505 24 Tm (Page 8/23) Tj ET
+endstream
+endobj
+12 0 obj
+<< /Length 3208 >>
+stream
+BT /F1 10 Tf 1 0 0 1 48 800 Tm (Le projet embarque sa propre version de `get_next_line` dans `cub3d/get_next_line/`.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 774 Tm (5.1Idee generale) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 751 Tm (Le principe est simple:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 731 Tm (- garder un buffer statique entre deux appels) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 719 Tm (- lire petit a petit le fichier) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 707 Tm (- s'arreter des qu'on a une ligne complete) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 695 Tm (- renvoyer cette ligne) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 683 Tm (- conserver le reste pour l'appel suivant) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 657 Tm (5.2`get_next_line\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 634 Tm (Ordre:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 614 Tm (1. recuperer l'adresse du buffer statique avec `gnl_buffer\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 602 Tm (2. verifier `fd` et `BUFFER_SIZE`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 590 Tm (3. lire tant qu'il n'y a pas encore de `) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 578 Tm (` dans le buffer) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 566 Tm (4. si `read\(\)` a renvoye `-1`, nettoyer via `free_if_err\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 554 Tm (5. si le buffer est vide, retourner `NULL`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 542 Tm (6. sinon extraire une ligne via `extract_line\(\)`) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 516 Tm (5.3`read_it\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 493 Tm (Cette fonction lit un bloc depuis le fichier:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 473 Tm (- alloue un `tmp`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 461 Tm (- appelle `read\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 449 Tm (- si le buffer principal est vide, cree une chaine vide) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 437 Tm (- concatene l'ancien buffer et le bloc lu) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 425 Tm (- remplace le buffer principal par cette nouvelle chaine) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 399 Tm (5.4`extract_line\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 376 Tm (Si un `) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 364 Tm (` est present:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 344 Tm (- couper la chaine au bon endroit) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 332 Tm (- renvoyer la partie de gauche) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 320 Tm (- garder la partie de droite dans le buffer statique) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 300 Tm (Sinon:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 280 Tm (- renvoyer tout le buffer) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 268 Tm (- remettre le buffer a `NULL`) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 242 Tm (5.5`gnl_clear\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 219 Tm (Cette fonction est capitale dans ce projet. Elle vide explicitement le buffer statique. Comme le) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 207 Tm (parsing peut quitter tot sur erreur, il fallait une fonction de reset pour eviter toute fuite) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 195 Tm (entre deux parse.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 175 Tm (---) Tj ET
+BT /F2 14 Tf 1 0 0 1 48 147 Tm (6. Initialisation graphique et chargement des textures) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 119 Tm (Tout ce bloc est dans `src/mlx_init.c`.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 93 Tm (6.1`setup_mlx_core\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 70 Tm (Cette fonction cree le coeur MLX:) Tj ET
+BT /F1 9 Tf 1 0 0 1 505 24 Tm (Page 9/23) Tj ET
+endstream
+endobj
+13 0 obj
+<< /Length 3298 >>
+stream
+BT /F1 10 Tf 1 0 0 1 48 800 Tm (1. stocker largeur et hauteur) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 788 Tm (2. `mlx_init\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 776 Tm (3. `mlx_new_window\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 764 Tm (4. `mlx_new_image\(\)` pour creer le framebuffer hors ecran) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 752 Tm (5. `mlx_get_data_addr\(\)` pour recuperer l'adresse memoire du framebuffer) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 732 Tm (L'interet du framebuffer hors ecran est simple: on dessine toute l'image dans un buffer, puis on) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 720 Tm (l'envoie d'un coup a la fenetre. Cela evite le scintillement et simplifie le rendu.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 694 Tm (6.2`load_texture\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 671 Tm (Cette fonction charge une texture XPM:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 651 Tm (- `mlx_xpm_file_to_image\(\)` charge le fichier et donne sa taille) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 639 Tm (- `mlx_get_data_addr\(\)` donne l'adresse brute des pixels) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 619 Tm (Si l'un des deux echoue, la fonction affiche une erreur explicite.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 593 Tm (6.3`mlx_setup\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 570 Tm (`mlx_setup\(\)` orchestre tout:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 550 Tm (- initialiser MLX) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 538 Tm (- charger `north`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 526 Tm (- charger `south`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 514 Tm (- charger `west`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 502 Tm (- charger `east`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 482 Tm (Cette fonction garantit que, quand elle retourne `1`, le moteur a tout ce qu'il faut pour) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 470 Tm (dessiner.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 444 Tm (6.4`mlx_destroy\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 421 Tm (Cette fonction fait le nettoyage symetrique:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 401 Tm (- detruire la frame) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 389 Tm (- detruire les textures) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 377 Tm (- detruire la fenetre) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 365 Tm (- detruire l'affichage MLX) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 353 Tm (- remettre tous les pointeurs a `NULL`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 333 Tm (Ce reset a `NULL` est une bonne pratique defensive: si `mlx_destroy\(\)` est appelee dans) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 321 Tm (plusieurs chemins, on evite les doubles destructions.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 301 Tm (---) Tj ET
+BT /F2 14 Tf 1 0 0 1 48 273 Tm (7. Input et deplacement) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 239 Tm (7.1Ce que demande exactement le sujet) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 216 Tm (Le sujet demande:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 196 Tm (- fleche gauche et fleche droite pour regarder) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 184 Tm (- `W`, `A`, `S`, `D` pour se deplacer) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 172 Tm (- `ESC` pour quitter) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 152 Tm (Le code actuel suit exactement cette exigence.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 126 Tm (7.2`map_key\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 103 Tm (Cette fonction convertit un `keycode` brut recu de MLX en action interne.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 83 Tm (Correspondances actuelles:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 63 Tm (- fleche gauche -> `ACT_TURN_LEFT`) Tj ET
+BT /F1 9 Tf 1 0 0 1 505 24 Tm (Page 10/23) Tj ET
+endstream
+endobj
+14 0 obj
+<< /Length 3003 >>
+stream
+BT /F1 10 Tf 1 0 0 1 48 800 Tm (- fleche droite -> `ACT_TURN_RIGHT`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 788 Tm (- `W` -> `ACT_MOVE_FWD`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 776 Tm (- `A` -> `ACT_MOVE_LEFT`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 764 Tm (- `S` -> `ACT_MOVE_BACK`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 752 Tm (- `D` -> `ACT_MOVE_RIGHT`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 732 Tm (L'avantage de cette normalisation est important:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 712 Tm (- `render.c` ne depend plus de keycodes bruts) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 700 Tm (- le code de mouvement manipule des intentions \(`aller en avant`, `tourner a droite`\) et non des) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 688 Tm (  codes clavier) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 662 Tm (7.3`key_press\(\)` et `key_release\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 639 Tm (Ces deux fonctions ne deplacent pas directement le joueur.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 619 Tm (Elles font une chose simple:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 599 Tm (- marquer une action comme active \(`1`\) quand on appuie) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 587 Tm (- marquer cette action comme inactive \(`0`\) quand on relache) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 567 Tm (C'est une bonne architecture car elle permet des mouvements fluides:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 547 Tm (- maintenir `W` pour avancer en continu) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 535 Tm (- maintenir fleche droite pour tourner en continu) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 523 Tm (- combiner `W` + `D` ou `W` + fleche droite) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 497 Tm (7.4`on_close\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 474 Tm (Cette fonction est appelee sur `ESC` ou sur la croix rouge.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 454 Tm (Elle:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 434 Tm (- detruit MLX) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 422 Tm (- libere `t_cub`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 410 Tm (- appelle `exit\(0\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 390 Tm (C'est la sortie propre du programme.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 370 Tm (---) Tj ET
+BT /F2 14 Tf 1 0 0 1 48 342 Tm (8. La boucle de rendu) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 314 Tm (Tout se passe dans `src/render.c`.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 288 Tm (8.1`render_frame\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 265 Tm (A chaque frame:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 245 Tm (1. `update_player\(g\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 233 Tm (2. `draw_floor_ceiling\(g\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 221 Tm (3. `cast_rays\(g\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 209 Tm (4. `mlx_put_image_to_window\(...\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 189 Tm (C'est le coeur du moteur.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 163 Tm (8.2`update_player\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 140 Tm (Cette fonction lit l'etat des actions dans `keys[]`:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 120 Tm (- avant/arriere) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 108 Tm (- strafe gauche/droite) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 96 Tm (- rotation gauche/droite) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 76 Tm (Puis elle:) Tj ET
+BT /F1 9 Tf 1 0 0 1 505 24 Tm (Page 11/23) Tj ET
+endstream
+endobj
+15 0 obj
+<< /Length 3295 >>
+stream
+BT /F1 10 Tf 1 0 0 1 48 800 Tm (- met a jour l'angle du joueur) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 788 Tm (- appelle `move_player\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 768 Tm (Les vitesses sont fixees par:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 748 Tm (- `MOVE_SPEED 0.03`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 736 Tm (- `ROT_SPEED 0.04`) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 710 Tm (8.3`move_player\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 687 Tm (Cette fonction calcule une position candidate.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 667 Tm (Pour l'avance/recul:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 647 Tm (- `nx = x + cos\(angle\) * fwd`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 635 Tm (- `ny = y + sin\(angle\) * fwd`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 615 Tm (Pour le strafe:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 595 Tm (- angle lateral = `angle + PI / 2`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 583 Tm (- on ajoute une composante laterale sur `nx` et `ny`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 563 Tm (Ensuite, on ne valide pas d'un coup la position finale. On teste separerement:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 543 Tm (- l'axe X) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 531 Tm (- l'axe Y) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 511 Tm (C'est une bonne technique pour glisser le long des murs au lieu de rester bloque brutalement sur) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 499 Tm (les diagonales.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 473 Tm (8.4`can_move\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 450 Tm (Cette fonction teste quatre coins autour du joueur avec un petit rayon `COLLIDER_R = 0.20`.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 430 Tm (On ne teste pas seulement le centre du joueur. Sinon il pourrait entrer partiellement dans un) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 418 Tm (mur. Le petit collider donne une collision plus realiste.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 398 Tm (Comme `map_is_wall\(\)` considere aussi les espaces comme des murs, on n'a pas le droit d'avancer) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 386 Tm (hors de la zone ferme de la map.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 360 Tm (8.5`draw_floor_ceiling\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 337 Tm (Cette fonction remplit le framebuffer:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 317 Tm (- moitie haute -> couleur plafond) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 305 Tm (- moitie basse -> couleur sol) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 285 Tm (Ce n'est pas du bonus de floor casting texture. Dans le mandatory du sujet, le sol et le plafond) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 273 Tm (sont des couleurs, pas des textures.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 253 Tm (---) Tj ET
+BT /F2 14 Tf 1 0 0 1 48 225 Tm (9. Le raycasting, explique pas a pas) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 197 Tm (C'est la partie la plus classique de soutenance cub3D.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 171 Tm (9.1Idee de base) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 148 Tm (On imagine que le joueur est dans une grille 2D. Pour fabriquer l'image 3D, on n'envoie pas un) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 136 Tm (seul rayon, mais un rayon par colonne de l'ecran.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 116 Tm (Si l'ecran fait `1024` pixels de large, on lance `1024` rayons.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 96 Tm (Pour chaque rayon:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 76 Tm (1. on calcule sa direction) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 64 Tm (2. on avance de case en case dans la grille jusqu'a toucher un mur) Tj ET
+BT /F1 9 Tf 1 0 0 1 505 24 Tm (Page 12/23) Tj ET
+endstream
+endobj
+16 0 obj
+<< /Length 3334 >>
+stream
+BT /F1 10 Tf 1 0 0 1 48 800 Tm (3. on mesure la distance au mur) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 788 Tm (4. on convertit cette distance en hauteur de mur a dessiner) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 776 Tm (5. on choisit la bonne texture selon le cote du mur touche) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 764 Tm (6. on echantillonne la texture et on colorie la colonne) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 738 Tm (9.2`cast_rays\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 715 Tm (`cast_rays\(\)` boucle de `x = 0` a `x < largeur_ecran`.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 695 Tm (Pour chaque colonne:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 675 Tm (- `init_ray\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 663 Tm (- `step_dda\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 651 Tm (- `compute_wall\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 639 Tm (- `draw_column\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 619 Tm (Donc une colonne ecran correspond exactement a un rayon.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 593 Tm (9.3`init_ray\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 570 Tm (Cette fonction calcule tout ce qui est necessaire avant la marche DDA.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 550 Tm (#### 9.3.1 `camera_x`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 530 Tm (Formule:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 510 Tm (`camera_x = 2.0 * x / screen_width - 1.0`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 490 Tm (Interet:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 470 Tm (- colonne gauche -> proche de `-1`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 458 Tm (- centre -> `0`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 446 Tm (- colonne droite -> proche de `1`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 426 Tm (On transforme donc un indice de pixel en position relative dans le champ de vision.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 406 Tm (#### 9.3.2 Angle du rayon) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 386 Tm (Formule du code:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 366 Tm (`angle = player.angle + atan\(camera_x * tan\(PI / 6.0\)\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 346 Tm (Comme `PI / 6 = 30 degres`, le champ de vision total vaut environ `60 degres`.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 326 Tm (Le centre de l'ecran regarde exactement dans `player.angle`.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 314 Tm (Les bords regardent un peu plus a gauche ou a droite.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 294 Tm (#### 9.3.3 Direction du rayon) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 274 Tm (On convertit l'angle en vecteur 2D:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 254 Tm (- `ray_dir_x = cos\(angle\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 242 Tm (- `ray_dir_y = sin\(angle\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 222 Tm (#### 9.3.4 Position de depart dans la grille) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 202 Tm (- `map_x = \(int\)player.x`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 190 Tm (- `map_y = \(int\)player.y`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 170 Tm (On recupere la case dans laquelle se trouve le joueur.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 150 Tm (#### 9.3.5 Distances DDA) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 130 Tm (- `delta_x = abs\(1 / ray_dir_x\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 118 Tm (- `delta_y = abs\(1 / ray_dir_y\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 98 Tm (Interpretation:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 78 Tm (- `delta_x` = distance a parcourir sur le rayon pour franchir une ligne verticale de grille) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 66 Tm (- `delta_y` = distance a parcourir sur le rayon pour franchir une ligne horizontale de grille) Tj ET
+BT /F1 9 Tf 1 0 0 1 505 24 Tm (Page 13/23) Tj ET
+endstream
+endobj
+17 0 obj
+<< /Length 3286 >>
+stream
+BT /F1 10 Tf 1 0 0 1 48 800 Tm (Le petit `1e-9` evite une division exacte par zero.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 780 Tm (#### 9.3.6 Sens du pas) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 760 Tm (Si `ray_dir_x < 0`, le rayon va vers la gauche:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 740 Tm (- `step_x = -1`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 720 Tm (Sinon il va vers la droite:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 700 Tm (- `step_x = 1`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 680 Tm (Meme logique pour `step_y`.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 660 Tm (#### 9.3.7 Premiere distance a une frontiere de case) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 640 Tm (`side_x` et `side_y` mesurent la distance initiale avant le premier franchissement de ligne de) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 628 Tm (grille.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 608 Tm (C'est ce qui permet de savoir si le prochain pas DDA se fera:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 588 Tm (- sur un bord vertical) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 576 Tm (- ou sur un bord horizontal) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 550 Tm (9.4`step_dda\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 527 Tm (C'est la marche dans la grille.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 507 Tm (Boucle:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 487 Tm (- si `side_x < side_y`, on franchit d'abord une ligne verticale) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 475 Tm (- sinon, on franchit une ligne horizontale) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 455 Tm (Dans le premier cas:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 435 Tm (- `side_x += delta_x`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 423 Tm (- `map_x += step_x`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 411 Tm (- `side = 0`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 391 Tm (Dans le second cas:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 371 Tm (- `side_y += delta_y`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 359 Tm (- `map_y += step_y`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 347 Tm (- `side = 1`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 327 Tm (Puis on teste la case atteinte avec `map_is_wall\(\)`.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 307 Tm (DËs qu'on touche un mur, on s'arrete.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 287 Tm (Pourquoi cela marche?) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 267 Tm (Parce qu'au lieu d'avancer en continu avec de toutes petites valeurs, on saute directement) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 255 Tm (d'intersection de grille en intersection de grille. C'est beaucoup plus efficace.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 229 Tm (9.5`compute_wall\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 206 Tm (Une fois le mur touche, il faut calculer la distance utile pour l'affichage.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 186 Tm (#### 9.5.1 Distance perpendiculaire) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 166 Tm (Formules:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 146 Tm (- si `side == 0`:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 134 Tm (  `perp = \(map_x - player.x + \(1 - step_x\) / 2.0\) / ray_dir_x`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 122 Tm (- sinon:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 110 Tm (  `perp = \(map_y - player.y + \(1 - step_y\) / 2.0\) / ray_dir_y`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 90 Tm (On prend la distance perpendiculaire a la camera, pas la distance brute du rayon. Sinon on) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 78 Tm (aurait l'effet "fish-eye": les murs sur les bords paraitraient artificiellement plus lointains.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 58 Tm (#### 9.5.2 Hauteur de mur) Tj ET
+BT /F1 9 Tf 1 0 0 1 505 24 Tm (Page 14/23) Tj ET
+endstream
+endobj
+18 0 obj
+<< /Length 3529 >>
+stream
+BT /F1 10 Tf 1 0 0 1 48 800 Tm (Formule:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 780 Tm (`line_h = screen_height / perp`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 760 Tm (Interpretation:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 740 Tm (- mur proche -> `perp` petite -> `line_h` grande) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 728 Tm (- mur lointain -> `perp` grande -> `line_h` petite) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 708 Tm (C'est exactement l'effet de perspective recherche.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 688 Tm (#### 9.5.3 Bornes verticales sur l'ecran) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 668 Tm (- `start = -line_h / 2 + screen_height / 2`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 656 Tm (- `end = line_h / 2 + screen_height / 2`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 636 Tm (Puis on clip pour rester dans la fenetre.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 616 Tm (#### 9.5.4 Choix de la texture selon l'orientation) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 596 Tm (Ici le code choisit entre quatre textures:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 576 Tm (- `side == 0` et `step_x > 0` -> mur Est -> `tex_ea`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 564 Tm (- `side == 0` et `step_x < 0` -> mur Ouest -> `tex_we`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 552 Tm (- `side == 1` et `step_y > 0` -> mur Sud -> `tex_so`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 540 Tm (- sinon -> mur Nord -> `tex_no`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 520 Tm (C'est le coeur de la conformite du mandatory pour les quatre textures de murs.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 494 Tm (9.6`draw_column\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 471 Tm (Cette fonction dessine la colonne de mur texturee.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 451 Tm (#### 9.6.1 Position exacte de l'impact sur le mur) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 431 Tm (On calcule d'abord `wall_x`, c'est-a-dire la coordonnee exacte du point d'impact sur le mur,) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 419 Tm (puis on garde uniquement sa partie fractionnaire.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 399 Tm (Cela donne une valeur entre `0` et `1` qui indique ou on a touche la face du mur.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 379 Tm (#### 9.6.2 Coordonne `tex_x`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 359 Tm (On la transforme en colonne de texture:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 339 Tm (`tex_x = wall_x * tex->w`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 319 Tm (Puis, selon le cote touche, on peut inverser `tex_x` pour eviter que la texture soit retournee) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 307 Tm (horizontalement.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 287 Tm (#### 9.6.3 Parcours vertical de la texture) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 267 Tm (On veut etirer ou compresser la texture sur la hauteur de mur affichee.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 247 Tm (- `step = tex->h / line_h`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 235 Tm (- `pos` = position initiale dans la texture) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 215 Tm (Ensuite, pour chaque pixel `y` entre `start` et `end`:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 195 Tm (- `tex_y = \(int\)pos`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 183 Tm (- on lit le pixel couleur dans la texture) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 171 Tm (- on l'ecrit avec `put_pixel\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 159 Tm (- `pos += step`) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 133 Tm (9.7Pourquoi le rendu semble 3D alors qu'on dessine seulement des colonnes) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 110 Tm (Parce que:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 90 Tm (- chaque colonne a sa propre distance) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 78 Tm (- les murs proches sont plus hauts) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 66 Tm (- les murs lointains sont plus bas) Tj ET
+BT /F1 9 Tf 1 0 0 1 505 24 Tm (Page 15/23) Tj ET
+endstream
+endobj
+19 0 obj
+<< /Length 2793 >>
+stream
+BT /F1 10 Tf 1 0 0 1 48 800 Tm (- le tout est calcule colonne par colonne avec un angle legerement different) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 780 Tm (Le cerveau reconstitue naturellement la profondeur.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 760 Tm (---) Tj ET
+BT /F2 14 Tf 1 0 0 1 48 732 Tm (10. Helpers utilitaires importants) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 698 Tm (10.1 `map_get\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 675 Tm (Cette fonction lit une case de la map sans risque.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 655 Tm (Si la demande sort de la map, elle retourne un espace `' '`.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 635 Tm (C'est une decision tres importante car cela permet de considerer automatiquement l'exterieur de) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 623 Tm (la map comme du vide.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 597 Tm (10.2 `map_is_wall\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 574 Tm (Cette fonction retourne `1` si la case vaut:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 554 Tm (- `'1'`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 542 Tm (- ou `' '`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 522 Tm (Autrement dit, un espace est traite comme un mur/infranchissable. Cela sert a la fois:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 502 Tm (- pour le raycasting) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 490 Tm (- pour la collision du joueur) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 464 Tm (10.3 `put_pixel\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 441 Tm (Fonction de base du rendu. Elle:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 421 Tm (- verifie que l'image et les coordonnees sont valides) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 409 Tm (- calcule l'adresse memoire du pixel cible) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 397 Tm (- ecrit la couleur) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 377 Tm (Sans cette abstraction, le code de rendu serait beaucoup plus sale.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 351 Tm (10.4 `str_len\(\)`, `str_dup\(\)`, `str_ndup\(\)`, `str_chr\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 328 Tm (Ces utilitaires existent pour rester autonomes sans dependre d'une libft externe dans ce depot.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 308 Tm (Ils servent au parsing et a GNL.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 288 Tm (---) Tj ET
+BT /F2 14 Tf 1 0 0 1 48 260 Tm (11. Nettoyage memoire et fermeture propre) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 226 Tm (11.1 `free_map_grid\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 203 Tm (Liberer:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 183 Tm (- chaque ligne de `map.grid`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 171 Tm (- puis le tableau de pointeurs) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 151 Tm (Puis remettre:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 131 Tm (- `grid = NULL`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 119 Tm (- `height = 0`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 107 Tm (- `width = 0`) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 81 Tm (11.2 `free_cub\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 58 Tm (Liberer:) Tj ET
+BT /F1 9 Tf 1 0 0 1 505 24 Tm (Page 16/23) Tj ET
+endstream
+endobj
+20 0 obj
+<< /Length 2986 >>
+stream
+BT /F1 10 Tf 1 0 0 1 48 800 Tm (- les quatre chemins de textures) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 788 Tm (- la map) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 768 Tm (Cette fonction s'occupe du contenu logique de la scene.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 742 Tm (11.3 `mlx_destroy\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 719 Tm (Liberer:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 699 Tm (- la frame MLX) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 687 Tm (- les quatre textures chargees) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 675 Tm (- la fenetre) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 663 Tm (- le display/contexte MLX) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 643 Tm (Cette fonction s'occupe de la partie graphique.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 617 Tm (11.4 `parse_fail\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 594 Tm (C'est le cleanup specialise du parsing.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 574 Tm (Il nettoie tous les etats partiels qui peuvent exister si le programme n'a pas encore atteint la) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 562 Tm (phase graphique.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 536 Tm (11.5 `on_close\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 513 Tm (C'est la sortie finale en cas de fermeture utilisateur.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 493 Tm (Chemin:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 473 Tm (- `mlx_destroy\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 461 Tm (- `free_cub\(\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 449 Tm (- `exit\(0\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 429 Tm (---) Tj ET
+BT /F2 14 Tf 1 0 0 1 48 401 Tm (12. Fonction par fonction, fichier par fichier) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 373 Tm (Cette section sert de pense-bete rapide avant la soutenance.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 347 Tm (12.1 `src/main.c`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 324 Tm (- `dir_to_angle\(char c\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 312 Tm (  Convertit `N/S/E/W` en angle de depart du joueur.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 292 Tm (- `setup_game\(t_game *game\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 280 Tm (  Transforme les donnees parsees en etat runtime: position reelle du joueur et couleurs) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 268 Tm (compactees.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 248 Tm (- `main\(int ac, char **av\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 236 Tm (  Point d'entree du programme. Il orchestre tout le cycle de vie.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 210 Tm (12.2 `src/init_struct.c`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 187 Tm (- `init_cub\(t_cub *cub\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 175 Tm (  Remet a zero toute la structure de scene logique.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 155 Tm (- `init_images\(t_game *game\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 143 Tm (  Remet a `NULL` tous les pointeurs MLX et textures chargees.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 123 Tm (- `init_game_struct\(t_game *game\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 111 Tm (  Initialise tout l'etat runtime global, y compris le tableau des touches.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 85 Tm (12.3 `src/parse_cub.c`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 62 Tm (- `init_gm\(t_gm *gm, t_cub *cub\)`) Tj ET
+BT /F1 9 Tf 1 0 0 1 505 24 Tm (Page 17/23) Tj ET
+endstream
+endobj
+21 0 obj
+<< /Length 3447 >>
+stream
+BT /F1 10 Tf 1 0 0 1 48 800 Tm (  Initialise le contexte temporaire de parsing.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 780 Tm (- `parse_fail\(t_gm *gm, char *msg\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 768 Tm (  Nettoie un parsing partiellement construit et affiche l'erreur.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 748 Tm (- `check_path_map\(char *path_map\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 736 Tm (  Verifie extension `.cub` et non-dossier.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 716 Tm (- `parse_cub\(t_cub *cub, char *path_map\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 704 Tm (  Fonction centrale du parsing.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 678 Tm (12.4 `src/init_read.c`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 655 Tm (- `trim_eol\(char *line\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 643 Tm (  Supprime fin de ligne Unix ou Windows.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 623 Tm (- `has_all_config\(t_gm *gm\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 611 Tm (  Verifie que les 6 configurations obligatoires ont ete vues.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 591 Tm (- `store_map_line\(t_gm *gm\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 579 Tm (  Ajoute une ligne de map et met a jour la largeur max.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 559 Tm (- `read_line\(t_gm *gm\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 547 Tm (  Classe une ligne: vide, config, ou contenu de map.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 527 Tm (- `read_cub_file\(t_gm *gm\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 515 Tm (  Lit tout le fichier ligne par ligne.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 489 Tm (12.5 `src/good_map_utils.c`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 466 Tm (- `starts_with_id\(char *s, char *id\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 454 Tm (  Verifie un identifiant de config.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 434 Tm (- `gm_has_cub_ext\(const char *s\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 422 Tm (  Verifie l'extension `.cub`.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 402 Tm (- `gm_is_config_line\(char *line\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 390 Tm (  Verifie si une ligne ressemble a une config valide.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 370 Tm (- `gm_free_lines\(char **lines, int count\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 358 Tm (  Libere un tableau de lignes allouees.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 332 Tm (12.6 `src/good_map_cfg.c`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 309 Tm (- `skip_spaces\(char *s\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 297 Tm (  Avance apres les espaces.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 277 Tm (- `trim_token\(char *s\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 265 Tm (  Duplique un token en retirant les espaces exterieurs.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 245 Tm (- `check_path\(char *path\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 233 Tm (  Verifie qu'un chemin existe et n'est pas un dossier.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 213 Tm (- `set_texture\(char **dst, int *flag, char *s\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 201 Tm (  Parse un chemin de texture, refuse les doublons et stocke le resultat.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 181 Tm (- `gm_parse_config\(char *line, t_gm *gm\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 169 Tm (  Parse une ligne de configuration en la dispatchant vers texture ou couleur.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 143 Tm (12.7 `src/good_map_rgb.c`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 120 Tm (- `skip_spaces\(char *s\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 108 Tm (  Helper local pour ignorer les espaces.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 88 Tm (- `parse_value\(char **s, int *value\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 76 Tm (  Lit un entier decimal.) Tj ET
+BT /F1 9 Tf 1 0 0 1 505 24 Tm (Page 18/23) Tj ET
+endstream
+endobj
+22 0 obj
+<< /Length 3449 >>
+stream
+BT /F1 10 Tf 1 0 0 1 48 800 Tm (- `parse_rgb\(t_color *color, char *s\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 788 Tm (  Parse `R,G,B` complet avec validation de plage.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 768 Tm (- `gm_set_color\(t_color *color, int *flag, char *s\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 756 Tm (  Refuse doublon ou RGB invalide.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 730 Tm (12.8 `src/good_map_push.c`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 707 Tm (- `gm_expand\(char ***lines, int count, int *cap\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 695 Tm (  Agrandit le tableau dynamique des lignes de map.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 675 Tm (- `gm_push_line\(char ***lines, int *count, int *cap, char *line\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 663 Tm (  Ajoute une ligne de map dupliquee dans le tableau.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 637 Tm (12.9 `src/good_map_grid.c`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 614 Tm (- `cell_is_closed\(char **grid, int y, int x\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 602 Tm (  Verifie qu'une case jouable n'est pas collee a un espace.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 582 Tm (- `gm_is_closed\(char **lines, int height, int width\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 570 Tm (  Parcourt toute la map paddee pour verifier la fermeture.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 550 Tm (- `fill_row\(char *row, int width\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 538 Tm (  Remplit une ligne de padding avec des espaces.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 518 Tm (- `alloc_pad\(int height, int width\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 506 Tm (  Alloue la grille paddee.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 486 Tm (- `gm_pad_lines\(char **lines, int height, int width\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 474 Tm (  Copie la map au centre de la grille paddee.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 448 Tm (12.10 `src/init_map.c`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 425 Tm (- `assign_map\(t_gm *gm\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 413 Tm (  Transfere la map construite depuis le contexte de parsing vers `cub->map`.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 393 Tm (- `build_map\(t_gm *gm\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 381 Tm (  Valide la fermeture et le joueur, puis finalise la map.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 355 Tm (12.11 `src/find_player.c`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 332 Tm (- `is_player\(char c\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 320 Tm (  Verifie si un caractere est une orientation joueur.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 300 Tm (- `find_player\(t_map *map\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 288 Tm (  Trouve la position/orientation initiale et impose qu'il y ait exactement un joueur.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 262 Tm (12.12 `src/parsing.c`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 239 Tm (- `put_err\(char *s\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 227 Tm (  Ecrit un texte sur `stderr`.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 207 Tm (- `not_directory\(char *str\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 195 Tm (  Verifie qu'un chemin n'est pas un dossier.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 175 Tm (- `print_error\(char *msg\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 163 Tm (  Affiche `Error` puis un message explicite.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 143 Tm (- `str_chr\(const char *s, int c\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 131 Tm (  Equivalent minimal a `strchr`.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 105 Tm (12.13 `src/init_utils.c`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 82 Tm (- `is_map_char\(char c\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 70 Tm (  Verifie qu'un caractere est autorise dans la map.) Tj ET
+BT /F1 9 Tf 1 0 0 1 505 24 Tm (Page 19/23) Tj ET
+endstream
+endobj
+23 0 obj
+<< /Length 3324 >>
+stream
+BT /F1 10 Tf 1 0 0 1 48 800 Tm (- `is_empty_line\(char *line\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 788 Tm (  Verifie qu'une ligne est vide ou pleine d'espaces.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 768 Tm (- `is_map_line\(char *line\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 756 Tm (  Verifie qu'une ligne est une ligne de map valide.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 736 Tm (- `str_len\(const char *s\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 724 Tm (  Equivalent minimal a `strlen`.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 698 Tm (12.14 `src/string_dup.c`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 675 Tm (- `str_ndup\(const char *s, size_t len\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 663 Tm (  Duplique `len` caracteres.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 643 Tm (- `str_dup\(const char *s\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 631 Tm (  Duplique une chaine complete.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 605 Tm (12.15 `src/mlx_init.c`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 582 Tm (- `load_texture\(void *mlx, t_img *tex, char *path, char *name\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 570 Tm (  Charge une texture XPM et recupere son buffer pixel.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 550 Tm (- `setup_mlx_core\(t_game *g, int w, int h, char *title\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 538 Tm (  Cree le contexte MLX, la fenetre et le framebuffer.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 518 Tm (- `destroy_images\(t_game *g\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 506 Tm (  Detruit toutes les images MLX allouees.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 486 Tm (- `mlx_setup\(t_game *g, int w, int h, char *title\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 474 Tm (  Initialise tout le sous-systeme graphique.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 454 Tm (- `mlx_destroy\(t_game *g\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 442 Tm (  Nettoie tout le sous-systeme graphique.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 416 Tm (12.16 `src/input.c`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 393 Tm (- `map_key\(int keycode\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 381 Tm (  Traduit un keycode MLX en action interne.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 361 Tm (- `key_press\(int keycode, t_game *g\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 349 Tm (  Active une action de clavier.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 329 Tm (- `key_release\(int keycode, t_game *g\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 317 Tm (  Desactive une action de clavier.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 297 Tm (- `on_close\(t_game *g\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 285 Tm (  Ferme proprement le programme.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 259 Tm (12.17 `src/map_get.c`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 236 Tm (- `map_get\(t_map *m, int mx, int my\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 224 Tm (  Lit une case de map avec gestion defensive des bords.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 204 Tm (- `map_is_wall\(t_map *m, int mx, int my\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 192 Tm (  Traite `'1'` et `' '` comme infranchissables.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 166 Tm (12.18 `src/pixel.c`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 143 Tm (- `put_pixel\(t_game *g, int x, int y, int color\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 131 Tm (  Ecrit un pixel dans le framebuffer.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 105 Tm (12.19 `src/render.c`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 82 Tm (- `can_move\(t_game *g, double x, double y\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 70 Tm (  Teste si le joueur peut occuper une position avec son collider.) Tj ET
+BT /F1 9 Tf 1 0 0 1 505 24 Tm (Page 20/23) Tj ET
+endstream
+endobj
+24 0 obj
+<< /Length 3473 >>
+stream
+BT /F1 10 Tf 1 0 0 1 48 800 Tm (- `move_player\(t_game *g, double fwd, double strafe\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 788 Tm (  Applique les composantes de mouvement et gere le glissement sur les murs.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 768 Tm (- `update_player\(t_game *g\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 756 Tm (  Traduit l'etat des touches en mouvement/rotation.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 736 Tm (- `draw_floor_ceiling\(t_game *g\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 724 Tm (  Remplit le fond avec plafond et sol.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 704 Tm (- `render_frame\(t_game *g\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 692 Tm (  Dessine une frame complete.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 666 Tm (12.20 `src/raycast.c`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 643 Tm (- `init_ray\(t_game *g, t_ray *r, int x\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 631 Tm (  Initialise un rayon pour une colonne d'ecran.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 611 Tm (- `step_dda\(t_game *g, t_ray *r\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 599 Tm (  Fait progresser le rayon de case en case jusqu'au mur.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 579 Tm (- `compute_wall\(t_game *g, t_ray *r\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 567 Tm (  Calcule distance, hauteur, bornes d'affichage et choisit la texture.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 547 Tm (- `draw_column\(t_game *g, t_ray *r, t_img *tex, int x\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 535 Tm (  Dessine la portion de mur texturee sur la colonne `x`.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 515 Tm (- `cast_rays\(t_game *g\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 503 Tm (  Lance le raycasting complet sur toute la largeur de la fenetre.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 477 Tm (12.21 `src/cleanup.c`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 454 Tm (- `free_map_grid\(t_map *map\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 442 Tm (  Libere la grille de map.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 422 Tm (- `free_cub\(t_cub *cub\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 410 Tm (  Libere la scene logique complete.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 384 Tm (12.22 `src/good_map.c`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 361 Tm (- `good_map\(char *path_map\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 349 Tm (  Helper de validation simple: parse puis free. Cette fonction n'est pas au coeur du runtime) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 337 Tm (principal, mais elle peut servir pour des tests rapides.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 311 Tm (12.23 `get_next_line/get_next_line.c`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 288 Tm (- `gnl_buffer\(void\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 276 Tm (  Donne acces au buffer statique interne.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 256 Tm (- `free_if_err\(char **buffer, int *rd\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 244 Tm (  Nettoie le buffer si `read\(\)` a echoue.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 224 Tm (- `get_next_line\(int fd\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 212 Tm (  Lit et retourne une ligne complete.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 192 Tm (- `gnl_clear\(void\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 180 Tm (  Vide explicitement le buffer statique.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 154 Tm (12.24 `get_next_line/get_next_line_utils.c`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 131 Tm (- `gnl_strchr\(char *s, char c\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 119 Tm (  Cherche un caractere dans une chaine.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 99 Tm (- `gnl_strdup\(const char *s, int ln\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 87 Tm (  Duplique une chaine, avec option d'ajout de `) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 75 Tm (`.) Tj ET
+BT /F1 9 Tf 1 0 0 1 505 24 Tm (Page 21/23) Tj ET
+endstream
+endobj
+25 0 obj
+<< /Length 3353 >>
+stream
+BT /F1 10 Tf 1 0 0 1 48 800 Tm (- `gnl_strjoin\(char *s1, char *s2\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 788 Tm (  Concatene deux chaines.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 768 Tm (- `read_it\(int fd, char **buffer, int *reader\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 756 Tm (  Lit un bloc et l'ajoute au buffer statique.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 736 Tm (- `extract_line\(char **buffer\)`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 724 Tm (  Extrait la prochaine ligne complete du buffer.) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 704 Tm (---) Tj ET
+BT /F2 14 Tf 1 0 0 1 48 676 Tm (13. Ce qu'il faut savoir expliquer a la soutenance) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 642 Tm (13.1 Pourquoi le joueur est place avec `+ 0.5`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 619 Tm (Parce que la map est une grille de cases. Si on laissait le joueur au coin haut-gauche de sa) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 607 Tm (case, les collisions et les rayons seraient faux. Le centre de la case est la position logique) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 595 Tm (correcte.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 569 Tm (13.2 Pourquoi les espaces sont traites comme des murs) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 546 Tm (Parce qu'un espace represente du vide hors zone jouable. Si on ne le traitait pas comme un mur:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 526 Tm (- le joueur pourrait sortir de la map) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 514 Tm (- le raycasting pourrait partir dans le vide) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 502 Tm (- une map apparemment fermee pourrait en fait contenir une fuite par ses espaces) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 476 Tm (13.3 Pourquoi on utilise la distance perpendiculaire et non la distance brute du) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 461 Tm (rayon) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 438 Tm (Pour supprimer l'effet fish-eye. C'est une question classique d'evaluation.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 412 Tm (13.4 Pourquoi on dessine d'abord sol/plafond puis les murs) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 389 Tm (Parce que les murs ne recouvrent qu'une partie verticale de l'ecran. Le plus simple est:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 369 Tm (1. peindre tout le fond) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 357 Tm (2. venir ecraser la zone murale texturee par-dessus) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 331 Tm (13.5 Pourquoi le mouvement est gere par etat de touches et non directement dans) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 316 Tm (`key_press`) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 293 Tm (Parce que cela donne un mouvement continu et fluide. Si on deplacait le joueur uniquement lors) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 281 Tm (d'un evenement ponctuel, le jeu serait saccade.) Tj ET
+BT /F2 12 Tf 1 0 0 1 48 255 Tm (13.6 Pourquoi le parsing est separe du runtime) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 232 Tm (Parce qu'un parseur doit construire une scene valide avant meme que le moteur graphique) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 220 Tm (commence. Cela simplifie:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 200 Tm (- les erreurs) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 188 Tm (- la memoire) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 176 Tm (- les tests) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 164 Tm (- la lisibilite du code) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 144 Tm (---) Tj ET
+BT /F2 14 Tf 1 0 0 1 48 116 Tm (14. Conformite au sujet mandatory) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 88 Tm (Sur la base du code actuel:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 68 Tm (- MiniLibX: oui) Tj ET
+BT /F1 9 Tf 1 0 0 1 505 24 Tm (Page 22/23) Tj ET
+endstream
+endobj
+26 0 obj
+<< /Length 1893 >>
+stream
+BT /F1 10 Tf 1 0 0 1 48 800 Tm (- fenetre et boucle de rendu: oui) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 788 Tm (- quatre textures murales `N/S/E/W`: oui) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 776 Tm (- deux couleurs differentes sol/plafond: oui) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 764 Tm (- fleche gauche/droite: oui) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 752 Tm (- `W/A/S/D`: oui) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 740 Tm (- `ESC`: oui) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 728 Tm (- croix rouge: oui) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 716 Tm (- argument `.cub`: oui) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 704 Tm (- map fermee: oui) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 692 Tm (- un seul joueur: oui) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 680 Tm (- messages d'erreur explicites: oui) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 668 Tm (- README a la racine du repo: oui) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 656 Tm (- bonus: non, volontairement) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 636 Tm (---) Tj ET
+BT /F2 14 Tf 1 0 0 1 48 608 Tm (15. Conclusion a retenir pour l'oral) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 580 Tm (La meilleure facon de presenter ce projet est la suivante:) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 560 Tm (1. expliquer qu'on parse d'abord une scene complete et valide) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 548 Tm (2. montrer que le runtime convertit cette scene en etat de jeu) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 536 Tm (3. expliquer que chaque frame fait: input -> mouvement -> fond -> raycasting -> affichage) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 524 Tm (4. insister sur le raycasting: un rayon par colonne, DDA, distance perpendiculaire, hauteur) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 512 Tm (   projetee, texture selon orientation) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 500 Tm (5. finir par la gestion propre des erreurs et de la memoire) Tj ET
+BT /F1 10 Tf 1 0 0 1 48 480 Tm (Si vous savez raconter ce fil sans hesiter, vous maitrisez l'essentiel du projet.) Tj ET
+BT /F1 9 Tf 1 0 0 1 505 24 Tm (Page 23/23) Tj ET
+endstream
+endobj
+27 0 obj
+<< /Type /Pages /Kids [ 28 0 R 29 0 R 30 0 R 31 0 R 32 0 R 33 0 R 34 0 R 35 0 R 36 0 R 37 0 R 38 0 R 39 0 R 40 0 R 41 0 R 42 0 R 43 0 R 44 0 R 45 0 R 46 0 R 47 0 R 48 0 R 49 0 R 50 0 R ] /Count 23 >>
+endobj
+28 0 obj
+<< /Type /Page /Parent 27 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 4 0 R >>
+endobj
+29 0 obj
+<< /Type /Page /Parent 27 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 5 0 R >>
+endobj
+30 0 obj
+<< /Type /Page /Parent 27 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 6 0 R >>
+endobj
+31 0 obj
+<< /Type /Page /Parent 27 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 7 0 R >>
+endobj
+32 0 obj
+<< /Type /Page /Parent 27 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 8 0 R >>
+endobj
+33 0 obj
+<< /Type /Page /Parent 27 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 9 0 R >>
+endobj
+34 0 obj
+<< /Type /Page /Parent 27 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 10 0 R >>
+endobj
+35 0 obj
+<< /Type /Page /Parent 27 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 11 0 R >>
+endobj
+36 0 obj
+<< /Type /Page /Parent 27 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 12 0 R >>
+endobj
+37 0 obj
+<< /Type /Page /Parent 27 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 13 0 R >>
+endobj
+38 0 obj
+<< /Type /Page /Parent 27 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 14 0 R >>
+endobj
+39 0 obj
+<< /Type /Page /Parent 27 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 15 0 R >>
+endobj
+40 0 obj
+<< /Type /Page /Parent 27 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 16 0 R >>
+endobj
+41 0 obj
+<< /Type /Page /Parent 27 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 17 0 R >>
+endobj
+42 0 obj
+<< /Type /Page /Parent 27 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 18 0 R >>
+endobj
+43 0 obj
+<< /Type /Page /Parent 27 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 19 0 R >>
+endobj
+44 0 obj
+<< /Type /Page /Parent 27 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 20 0 R >>
+endobj
+45 0 obj
+<< /Type /Page /Parent 27 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 21 0 R >>
+endobj
+46 0 obj
+<< /Type /Page /Parent 27 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 22 0 R >>
+endobj
+47 0 obj
+<< /Type /Page /Parent 27 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 23 0 R >>
+endobj
+48 0 obj
+<< /Type /Page /Parent 27 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 24 0 R >>
+endobj
+49 0 obj
+<< /Type /Page /Parent 27 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 25 0 R >>
+endobj
+50 0 obj
+<< /Type /Page /Parent 27 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 26 0 R >>
+endobj
+51 0 obj
+<< /Type /Catalog /Pages 27 0 R >>
+endobj
+xref
+0 52
+0000000000 65535 f 
+0000000015 00000 n 
+0000000085 00000 n 
+0000000160 00000 n 
+0000000228 00000 n 
+0000004156 00000 n 
+0000007231 00000 n 
+0000010906 00000 n 
+0000014537 00000 n 
+0000018083 00000 n 
+0000021738 00000 n 
+0000025337 00000 n 
+0000029147 00000 n 
+0000032407 00000 n 
+0000035757 00000 n 
+0000038812 00000 n 
+0000042159 00000 n 
+0000045545 00000 n 
+0000048883 00000 n 
+0000052464 00000 n 
+0000055309 00000 n 
+0000058347 00000 n 
+0000061846 00000 n 
+0000065347 00000 n 
+0000068723 00000 n 
+0000072248 00000 n 
+0000075653 00000 n 
+0000077598 00000 n 
+0000077814 00000 n 
+0000077962 00000 n 
+0000078110 00000 n 
+0000078258 00000 n 
+0000078406 00000 n 
+0000078554 00000 n 
+0000078702 00000 n 
+0000078851 00000 n 
+0000079000 00000 n 
+0000079149 00000 n 
+0000079298 00000 n 
+0000079447 00000 n 
+0000079596 00000 n 
+0000079745 00000 n 
+0000079894 00000 n 
+0000080043 00000 n 
+0000080192 00000 n 
+0000080341 00000 n 
+0000080490 00000 n 
+0000080639 00000 n 
+0000080788 00000 n 
+0000080937 00000 n 
+0000081086 00000 n 
+0000081235 00000 n 
+trailer
+<< /Size 52 /Root 51 0 R >>
+startxref
+81286
+%%EOF

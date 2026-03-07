@@ -1,0 +1,13 @@
+.DS_Store
+pour_moi.txt
+oe/
+test/
+
+cub3d/cub3D
+cub3d/Cub3d
+cub3d/.audit_frame.ppm
+cub3d/obj/
+
+cub3d/minilibx-linux/obj/
+cub3d/minilibx-linux/libmlx*.a
+cub3d/minilibx-linux/*.o
