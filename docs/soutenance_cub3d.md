@@ -182,7 +182,7 @@ Cette structure n'est pas utilisee dans la version actuelle. C'est vraisemblable
 
 C'est la partie la plus importante pour la soutenance. Quand l'evaluateur demande "Que se passe-t-il du lancement jusqu'au premier affichage?", il faut pouvoir raconter exactement le chemin d'appel.
 
-### 3.1 `main()` dans `src/main.c`
+### 3.1 `main()` dans `src/engine_mmestron/main.c`
 
 Le programme commence dans `main(int ac, char **av)`.
 
@@ -343,7 +343,8 @@ C'est la vraie logique de classification d'une ligne.
 Ordre:
 
 1. `trim_eol()` supprime `
-` et ``
+` et `
+`
 2. si on n'est pas encore dans la map et que la ligne est vide, on l'accepte
 3. si on n'est pas encore dans la map et que la ligne ressemble a une ligne de map:
    - on verifie que toutes les configs ont deja ete lues avec `has_all_config()`
@@ -553,7 +554,7 @@ Cette fonction est capitale dans ce projet. Elle vide explicitement le buffer st
 
 ## 6. Initialisation graphique et chargement des textures
 
-Tout ce bloc est dans `src/mlx_init.c`.
+Tout ce bloc est dans `src/engine_mmestron/mlx_init.c`.
 
 ### 6.1 `setup_mlx_core()`
 
@@ -663,7 +664,7 @@ C'est la sortie propre du programme.
 
 ## 8. La boucle de rendu
 
-Tout se passe dans `src/render.c`.
+Tout se passe dans `src/engine_mmestron/render.c`.
 
 ### 8.1 `render_frame()`
 
@@ -1059,7 +1060,7 @@ Chemin:
 
 Cette section sert de pense-bete rapide avant la soutenance.
 
-### 12.1 `src/main.c`
+### 12.1 `src/engine_mmestron/main.c`
 
 - `dir_to_angle(char c)`
   Convertit `N/S/E/W` en angle de depart du joueur.
@@ -1070,7 +1071,7 @@ Cette section sert de pense-bete rapide avant la soutenance.
 - `main(int ac, char **av)`
   Point d'entree du programme. Il orchestre tout le cycle de vie.
 
-### 12.2 `src/init_struct.c`
+### 12.2 `src/parsing_yabouhar/init_cub.c` et `src/engine_mmestron/init_game_struct.c`
 
 - `init_cub(t_cub *cub)`
   Remet a zero toute la structure de scene logique.
@@ -1081,7 +1082,7 @@ Cette section sert de pense-bete rapide avant la soutenance.
 - `init_game_struct(t_game *game)`
   Initialise tout l'etat runtime global, y compris le tableau des touches.
 
-### 12.3 `src/parse_cub.c`
+### 12.3 `src/parsing_yabouhar/parse_cub.c`
 
 - `init_gm(t_gm *gm, t_cub *cub)`
   Initialise le contexte temporaire de parsing.
@@ -1095,7 +1096,7 @@ Cette section sert de pense-bete rapide avant la soutenance.
 - `parse_cub(t_cub *cub, char *path_map)`
   Fonction centrale du parsing.
 
-### 12.4 `src/init_read.c`
+### 12.4 `src/parsing_yabouhar/init_read.c`
 
 - `trim_eol(char *line)`
   Supprime fin de ligne Unix ou Windows.
@@ -1112,7 +1113,7 @@ Cette section sert de pense-bete rapide avant la soutenance.
 - `read_cub_file(t_gm *gm)`
   Lit tout le fichier ligne par ligne.
 
-### 12.5 `src/good_map_utils.c`
+### 12.5 `src/parsing_yabouhar/good_map_utils.c`
 
 - `starts_with_id(char *s, char *id)`
   Verifie un identifiant de config.
@@ -1126,7 +1127,7 @@ Cette section sert de pense-bete rapide avant la soutenance.
 - `gm_free_lines(char **lines, int count)`
   Libere un tableau de lignes allouees.
 
-### 12.6 `src/good_map_cfg.c`
+### 12.6 `src/parsing_yabouhar/good_map_cfg.c`
 
 - `skip_spaces(char *s)`
   Avance apres les espaces.
@@ -1143,7 +1144,7 @@ Cette section sert de pense-bete rapide avant la soutenance.
 - `gm_parse_config(char *line, t_gm *gm)`
   Parse une ligne de configuration en la dispatchant vers texture ou couleur.
 
-### 12.7 `src/good_map_rgb.c`
+### 12.7 `src/parsing_yabouhar/good_map_rgb.c`
 
 - `skip_spaces(char *s)`
   Helper local pour ignorer les espaces.
@@ -1157,7 +1158,7 @@ Cette section sert de pense-bete rapide avant la soutenance.
 - `gm_set_color(t_color *color, int *flag, char *s)`
   Refuse doublon ou RGB invalide.
 
-### 12.8 `src/good_map_push.c`
+### 12.8 `src/parsing_yabouhar/good_map_push.c`
 
 - `gm_expand(char ***lines, int count, int *cap)`
   Agrandit le tableau dynamique des lignes de map.
@@ -1165,7 +1166,7 @@ Cette section sert de pense-bete rapide avant la soutenance.
 - `gm_push_line(char ***lines, int *count, int *cap, char *line)`
   Ajoute une ligne de map dupliquee dans le tableau.
 
-### 12.9 `src/good_map_grid.c`
+### 12.9 `src/parsing_yabouhar/good_map_grid.c`
 
 - `cell_is_closed(char **grid, int y, int x)`
   Verifie qu'une case jouable n'est pas collee a un espace.
@@ -1182,7 +1183,7 @@ Cette section sert de pense-bete rapide avant la soutenance.
 - `gm_pad_lines(char **lines, int height, int width)`
   Copie la map au centre de la grille paddee.
 
-### 12.10 `src/init_map.c`
+### 12.10 `src/parsing_yabouhar/init_map.c`
 
 - `assign_map(t_gm *gm)`
   Transfere la map construite depuis le contexte de parsing vers `cub->map`.
@@ -1190,7 +1191,7 @@ Cette section sert de pense-bete rapide avant la soutenance.
 - `build_map(t_gm *gm)`
   Valide la fermeture et le joueur, puis finalise la map.
 
-### 12.11 `src/find_player.c`
+### 12.11 `src/parsing_yabouhar/find_player.c`
 
 - `is_player(char c)`
   Verifie si un caractere est une orientation joueur.
@@ -1198,7 +1199,7 @@ Cette section sert de pense-bete rapide avant la soutenance.
 - `find_player(t_map *map)`
   Trouve la position/orientation initiale et impose qu'il y ait exactement un joueur.
 
-### 12.12 `src/parsing.c`
+### 12.12 `src/parsing_yabouhar/parsing.c`
 
 - `put_err(char *s)`
   Ecrit un texte sur `stderr`.
@@ -1212,7 +1213,7 @@ Cette section sert de pense-bete rapide avant la soutenance.
 - `str_chr(const char *s, int c)`
   Equivalent minimal a `strchr`.
 
-### 12.13 `src/init_utils.c`
+### 12.13 `src/parsing_yabouhar/init_utils.c`
 
 - `is_map_char(char c)`
   Verifie qu'un caractere est autorise dans la map.
@@ -1226,7 +1227,7 @@ Cette section sert de pense-bete rapide avant la soutenance.
 - `str_len(const char *s)`
   Equivalent minimal a `strlen`.
 
-### 12.14 `src/string_dup.c`
+### 12.14 `src/parsing_yabouhar/string_dup.c`
 
 - `str_ndup(const char *s, size_t len)`
   Duplique `len` caracteres.
@@ -1234,7 +1235,7 @@ Cette section sert de pense-bete rapide avant la soutenance.
 - `str_dup(const char *s)`
   Duplique une chaine complete.
 
-### 12.15 `src/mlx_init.c`
+### 12.15 `src/engine_mmestron/mlx_init.c`
 
 - `load_texture(void *mlx, t_img *tex, char *path, char *name)`
   Charge une texture XPM et recupere son buffer pixel.
@@ -1251,7 +1252,7 @@ Cette section sert de pense-bete rapide avant la soutenance.
 - `mlx_destroy(t_game *g)`
   Nettoie tout le sous-systeme graphique.
 
-### 12.16 `src/input.c`
+### 12.16 `src/engine_mmestron/input.c`
 
 - `map_key(int keycode)`
   Traduit un keycode MLX en action interne.
@@ -1265,7 +1266,7 @@ Cette section sert de pense-bete rapide avant la soutenance.
 - `on_close(t_game *g)`
   Ferme proprement le programme.
 
-### 12.17 `src/map_get.c`
+### 12.17 `src/engine_mmestron/map_get.c`
 
 - `map_get(t_map *m, int mx, int my)`
   Lit une case de map avec gestion defensive des bords.
@@ -1273,12 +1274,12 @@ Cette section sert de pense-bete rapide avant la soutenance.
 - `map_is_wall(t_map *m, int mx, int my)`
   Traite `'1'` et `' '` comme infranchissables.
 
-### 12.18 `src/pixel.c`
+### 12.18 `src/engine_mmestron/pixel.c`
 
 - `put_pixel(t_game *g, int x, int y, int color)`
   Ecrit un pixel dans le framebuffer.
 
-### 12.19 `src/render.c`
+### 12.19 `src/engine_mmestron/render.c`
 
 - `can_move(t_game *g, double x, double y)`
   Teste si le joueur peut occuper une position avec son collider.
@@ -1295,7 +1296,7 @@ Cette section sert de pense-bete rapide avant la soutenance.
 - `render_frame(t_game *g)`
   Dessine une frame complete.
 
-### 12.20 `src/raycast.c`
+### 12.20 `src/engine_mmestron/raycast.c`
 
 - `init_ray(t_game *g, t_ray *r, int x)`
   Initialise un rayon pour une colonne d'ecran.
@@ -1312,7 +1313,7 @@ Cette section sert de pense-bete rapide avant la soutenance.
 - `cast_rays(t_game *g)`
   Lance le raycasting complet sur toute la largeur de la fenetre.
 
-### 12.21 `src/cleanup.c`
+### 12.21 `src/parsing_yabouhar/cleanup.c`
 
 - `free_map_grid(t_map *map)`
   Libere la grille de map.
@@ -1320,7 +1321,7 @@ Cette section sert de pense-bete rapide avant la soutenance.
 - `free_cub(t_cub *cub)`
   Libere la scene logique complete.
 
-### 12.22 `src/good_map.c`
+### 12.22 `src/parsing_yabouhar/good_map.c`
 
 - `good_map(char *path_map)`
   Helper de validation simple: parse puis free. Cette fonction n'est pas au coeur du runtime principal, mais elle peut servir pour des tests rapides.

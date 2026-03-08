@@ -9,6 +9,12 @@ first-person view of a maze described in a `.cub` file, using `miniLibX`.
 
 The current repository stores the project sources in `cub3d/`.
 
+Source layout:
+
+- `cub3d/src/parsing_yabouhar/`: parsing, `.cub` reading, config validation, map validation
+- `cub3d/src/engine_mmestron/`: main loop, MLX, input, movement, rendering, raycasting
+- `cub3d/get_next_line/`: shared line reader used by the parser
+
 ## Instructions
 
 Build on Linux:
